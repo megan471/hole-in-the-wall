@@ -1,0 +1,2104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hole In The Wall</title>
+<style>
+:root{--bg:#0f0f0f;--surface:#1a1a1a;--surface2:#242424;--border:#2e2e2e;--accent:#c9a84c;--accent2:#e8c97a;--red:#e05252;--green:#4caf7d;--blue:#5294e0;--purple:#9b59b6;--orange:#e08c52;--text:#f0f0f0;--muted:#888;--radius:10px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;min-height:100vh;}
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0f0f0f,#1a1200);}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:38px 32px;width:400px;text-align:center;}
+.login-box h1{color:var(--accent);font-size:1.35rem;margin-bottom:2px;}
+.login-box .sub{color:var(--muted);font-size:0.76rem;margin-bottom:20px;}
+.login-roles{display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap;}
+.role-btn{flex:1;min-width:68px;padding:8px 4px;border:2px solid var(--border);background:var(--surface2);color:var(--muted);border-radius:var(--radius);cursor:pointer;font-size:0.76rem;transition:all .2s;}
+.role-btn.active{border-color:var(--accent);color:var(--accent);background:#2a1f00;}
+.login-box input{width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:0.88rem;margin-bottom:8px;outline:none;}
+.login-box input:focus{border-color:var(--accent);}
+.btn-primary{width:100%;padding:11px;background:var(--accent);color:#000;border:none;border-radius:var(--radius);font-size:0.93rem;font-weight:700;cursor:pointer;}
+.btn-primary:hover{background:var(--accent2);}
+.login-err{color:var(--red);font-size:0.8rem;margin-top:5px;}
+#app{display:none;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:50px;position:sticky;top:0;z-index:100;}
+.topbar h2{color:var(--accent);font-size:0.92rem;}
+.topbar-user{color:var(--muted);font-size:0.76rem;}
+.btn-sm{padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:0.77rem;transition:all .2s;}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{border-color:var(--red);color:var(--red);}
+.btn-success{background:var(--green);color:#fff;border-color:var(--green);}
+.btn-accent{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600;}
+.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue);}
+.nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;padding:0 10px;scrollbar-width:none;}
+.nav::-webkit-scrollbar{display:none;}
+.nav-item{padding:12px 12px;color:var(--muted);cursor:pointer;font-size:0.79rem;border-bottom:3px solid transparent;white-space:nowrap;transition:all .2s;}
+.nav-item:hover{color:var(--text);}
+.nav-item.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
+.content{padding:14px;max-width:1200px;margin:0 auto;}
+.page{display:none;}.page.active{display:block;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:15px;margin-bottom:12px;}
+.card h3{color:var(--accent);font-size:0.88rem;margin-bottom:12px;}
+.section-title{font-size:1.08rem;font-weight:700;margin-bottom:12px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+label{display:block;font-size:0.75rem;color:var(--muted);margin-bottom:3px;}
+input[type=text],input[type=number],input[type=password],select,textarea{width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:0.83rem;outline:none;transition:border .2s;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+.form-group{margin-bottom:9px;}
+.form-row{display:flex;gap:7px;}.form-row .form-group{flex:1;}
+.stat-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px;}
+.stat-tile .label{font-size:0.7rem;color:var(--muted);margin-bottom:3px;}
+.stat-tile .value{font-size:1.2rem;font-weight:700;color:var(--accent);}
+table{width:100%;border-collapse:collapse;font-size:0.8rem;}
+th{text-align:left;padding:7px 9px;color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;font-size:0.7rem;text-transform:uppercase;}
+td{padding:7px 9px;border-bottom:1px solid var(--border);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--surface2);}
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:0.68rem;font-weight:600;}
+.badge-green{background:#1a3a2a;color:var(--green);}
+.badge-red{background:#3a1a1a;color:var(--red);}
+.badge-blue{background:#1a2a3a;color:var(--blue);}
+.badge-orange{background:#3a2a1a;color:var(--orange);}
+.badge-purple{background:#2a1a3a;color:var(--purple);}
+.badge-yellow{background:#2a2200;color:var(--accent);}
+.badge-gold{background:#2a1f00;color:var(--accent);border:1px solid var(--accent);}
+.badge-promo{background:#2a1a3a;color:var(--purple);border:1px solid var(--purple);}
+.order-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:7px;}
+.order-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.order-item-row{display:flex;justify-content:space-between;padding:2px 0;font-size:0.78rem;}
+.menu-item-row,.stock-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;background:var(--surface2);padding:7px 9px;border-radius:7px;border:1px solid var(--border);}
+.low-stock{border-color:var(--red)!important;}
+.table-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px;}
+.table-btn{background:var(--surface2);border:2px solid var(--border);border-radius:8px;padding:11px 5px;text-align:center;cursor:pointer;transition:all .2s;font-size:0.78rem;}
+.table-btn:hover,.table-btn.selected{border-color:var(--accent);background:#2a1f00;color:var(--accent);}
+.table-btn.has-order{border-color:var(--green);}
+.table-btn.unpaid{border-color:var(--red);}
+.menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;}
+.menu-tile{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px;cursor:pointer;transition:all .2s;}
+.menu-tile:hover{border-color:var(--accent);}
+.menu-tile .name{font-size:0.77rem;font-weight:600;margin-bottom:2px;}
+.menu-tile .price{color:var(--accent);font-size:0.75rem;}
+.menu-tile .cat-tag{font-size:0.65rem;color:var(--muted);margin-bottom:2px;}
+.cat-filter{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;}
+.cat-pill{padding:3px 9px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;font-size:0.72rem;}
+.cat-pill.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600;}
+.queue-card{background:var(--surface2);border:2px solid var(--border);border-radius:var(--radius);padding:11px;margin-bottom:9px;}
+.queue-card.new-order{border-color:var(--accent);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,.3);}50%{box-shadow:0 0 0 8px rgba(201,168,76,0);}}
+.divider{border:none;border-top:1px solid var(--border);margin:10px 0;}
+.alert{padding:7px 11px;border-radius:7px;margin-bottom:8px;font-size:0.8rem;}
+.alert-success{background:#1a3a2a;border:1px solid var(--green);color:var(--green);}
+.alert-error{background:#3a1a1a;border:1px solid var(--red);color:var(--red);}
+.alert-info{background:#1a2a3a;border:1px solid var(--blue);color:var(--blue);}
+.alert-warn{background:#2a1f00;border:1px solid var(--accent);color:var(--accent);}
+.alert-purple{background:#1a1a2a;border:1px solid var(--purple);color:var(--purple);}
+.vat-box{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:12px;margin-top:9px;}
+.vat-row{display:flex;justify-content:space-between;padding:4px 0;font-size:0.81rem;border-bottom:1px solid var(--border);}
+.vat-row:last-child{border-bottom:none;}
+.vat-row.total-row{font-weight:700;font-size:0.92rem;padding-top:7px;}
+.vat-row .lbl{color:var(--muted);}
+.upload-zone{border:2px dashed var(--border);border-radius:9px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:9px;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:#1a1200;}
+.upload-zone input[type=file]{display:none;}
+.recon-tx-row{display:flex;justify-content:space-between;padding:4px 7px;border-bottom:1px solid var(--border);font-size:0.77rem;}
+.tip-entry-row{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px;margin-bottom:7px;}
+.disc-btn{padding:7px 10px;border-radius:7px;border:2px solid var(--border);background:var(--surface2);cursor:pointer;text-align:center;transition:all .2s;font-size:0.77rem;}
+.disc-btn:hover,.disc-btn.active{border-color:var(--accent);background:#2a1f00;}
+.disc-btn .disc-name{font-weight:600;}
+.disc-btn .disc-pct{color:var(--accent);font-size:0.7rem;}
+/* PROMO */
+.promo-tile{background:var(--surface2);border:2px solid var(--border);border-radius:9px;padding:14px;cursor:pointer;transition:all .2s;text-align:center;}
+.promo-tile:hover,.promo-tile.active{border-color:var(--purple);}
+.promo-tile .pname{font-weight:700;font-size:0.9rem;margin-bottom:3px;}
+.promo-tile .ptag{font-size:0.71rem;color:var(--muted);}
+/* STOCK PHOTO UPLOAD */
+.photo-drop{border:2px dashed var(--purple);border-radius:9px;padding:18px;text-align:center;cursor:pointer;background:var(--surface2);transition:all .2s;}
+.photo-drop:hover{background:#1a1a2a;}
+.photo-drop input{display:none;}
+@media print{.topbar,.nav,.btn-sm,.btn-primary,.no-print{display:none!important;}body{background:white;color:black;}.card{border:1px solid #ccc;}}
+/* BILL PREVIEW MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:420px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);}
+.modal-header h3{color:var(--accent);font-size:0.95rem;margin:0;}
+.modal-body{flex:1;overflow-y:auto;padding:0;}
+.bill-preview{background:#fff;color:#111;font-family:monospace;font-size:13px;line-height:1.7;padding:20px;white-space:pre-wrap;min-height:300px;}
+.modal-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;}
+</style>
+</head>
+<!-- BILL PREVIEW MODAL -->
+<div id="bill-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeBillModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>🧾 Customer Bill Preview</h3>
+      <button class="btn-sm" onclick="closeBillModal()">✕ Close</button>
+    </div>
+    <div class="modal-body">
+      <div id="bill-preview-content" class="bill-preview"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-accent" onclick="printCurrentBill()" style="flex:1">🖨️ Print Bill</button>
+      <button class="btn-sm" onclick="closeBillModal()" style="flex:1">✕ Close</button>
+    </div>
+  </div>
+</div>
+<body>
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>🕳️ Hole In The Wall</h1>
+    <div class="sub">Pub Management System</div>
+    <!-- Step 1: role + password -->
+    <div id="login-role-step">
+      <div class="login-roles">
+        <button class="role-btn active" onclick="selectRole('admin')" id="role-admin">👩‍💼 Admin</button>
+        <button class="role-btn" onclick="selectRole('barman')" id="role-barman">🍺 Barman</button>
+        <button class="role-btn" onclick="selectRole('waiter')" id="role-waiter">🍽️ Waiter</button>
+        <button class="role-btn" onclick="selectRole('kitchen')" id="role-kitchen">👨‍🍳 Kitchen</button>
+      </div>
+      <input type="text" id="login-user" placeholder="Username (optional for waiters)" />
+      <input type="password" id="login-pass" placeholder="Password" />
+      <button class="btn-primary" onclick="doLogin()">Sign In</button>
+      <div class="login-err" id="login-err"></div>
+
+    </div>
+    <!-- Step 2: person picker (shown after successful barman/shared-waiter login) -->
+    <div id="login-picker-step" style="display:none"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px"><h2>🕳️ Hole In The Wall</h2><span class="topbar-user" id="topbar-user"></span></div>
+    <div style="display:flex;gap:5px;align-items:center"><span style="font-size:0.72rem;color:var(--muted)" id="today-date"></span><button class="btn-sm" onclick="doLogout()">Sign Out</button></div>
+  </div>
+  <div class="nav" id="main-nav"></div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="section-title">📊 Today's Overview</div>
+      <div class="grid4" style="margin-bottom:10px">
+        <div class="stat-tile"><div class="label">Gross Incl. VAT</div><div class="value" id="ds-total">R0.00</div></div>
+        <div class="stat-tile"><div class="label">Net Excl. VAT</div><div class="value" id="ds-excvat">R0.00</div></div>
+        <div class="stat-tile"><div class="label">Cash</div><div class="value" id="ds-cash">R0.00</div></div>
+        <div class="stat-tile"><div class="label">Card</div><div class="value" id="ds-card">R0.00</div></div>
+      </div>
+      <div class="grid4" style="margin-bottom:10px">
+        <div class="stat-tile"><div class="label">Total Tips</div><div class="value" id="ds-tips">R0.00</div></div>
+        <div class="stat-tile"><div class="label">VAT Amount</div><div class="value" id="ds-vat">R0.00</div></div>
+        <div class="stat-tile"><div class="label">Promo / Comp Spend</div><div class="value" id="ds-promo" style="color:var(--purple)">R0.00</div></div>
+        <div class="stat-tile"><div class="label">Unpaid Tables</div><div class="value" id="ds-unpaid" style="color:var(--red)">0</div></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>📋 Sales Breakdown</h3><table><thead><tr><th>Category</th><th>Incl.VAT</th><th>VAT</th><th>Excl.VAT</th></tr></thead><tbody id="dash-sales-table"></tbody></table></div>
+        <div class="card"><h3>🔔 Alerts</h3><div id="dash-alerts"><div class="empty-state">All good!</div></div></div>
+      </div>
+    </div>
+
+    <!-- PROMO / COMP TAB -->
+    <div class="page" id="page-promo">
+      <div class="section-title">🎭 Promo, Comp & Expense Tab</div>
+      <div class="card">
+        <h3>👥 Promo Customers (Complimentary)</h3>
+        <p style="font-size:0.79rem;color:var(--muted);margin-bottom:12px">These are company expenses. Select a person then log items given.</p>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px" id="promo-people-grid"></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <h3>📝 Log Promo / Expense Entry</h3>
+          <div class="form-group"><label>Person / Account</label><select id="promo-person"></select></div>
+          <div class="form-group"><label>Type</label>
+            <select id="promo-type">
+              <option value="comp">🎁 Complimentary (Free items given)</option>
+              <option value="shot">🥃 Free Shots</option>
+              <option value="breakage">💥 Breakage</option>
+              <option value="wastage">🗑️ Wastage / Spillage</option>
+              <option value="keg">🍺 Keg Wastage</option>
+              <option value="unpaid">💸 Customer Did Not Pay</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Description</label><input type="text" id="promo-desc" placeholder="e.g. 2x whiskey, 1x beer" /></div>
+          <div class="form-row">
+            <div class="form-group"><label>Quantity</label><input type="number" id="promo-qty" placeholder="1" /></div>
+            <div class="form-group"><label>Cost Price (R)</label><input type="number" id="promo-cost" placeholder="0.00" /></div>
+            <div class="form-group"><label>Retail Price (R)</label><input type="number" id="promo-retail" placeholder="0.00" /></div>
+          </div>
+          <div class="form-group"><label>Table # (if applicable)</label><input type="text" id="promo-table" placeholder="e.g. 5" /></div>
+          <div class="form-group"><label>Notes</label><textarea id="promo-notes" rows="2" placeholder="Any additional details..."></textarea></div>
+          <button class="btn-sm btn-accent" onclick="savePromoEntry()" style="width:100%">💾 Log Entry</button>
+          <div id="promo-msg" style="margin-top:6px"></div>
+        </div>
+        <div>
+          <div class="card">
+            <h3>📊 Today's Promo Summary</h3>
+            <div class="grid2" style="margin-bottom:10px">
+              <div class="stat-tile" style="padding:10px"><div class="label">Total Cost to Business</div><div class="value" style="color:var(--red)" id="promo-total-cost">R0.00</div></div>
+              <div class="stat-tile" style="padding:10px"><div class="label">Total Retail Value</div><div class="value" style="color:var(--purple)" id="promo-total-retail">R0.00</div></div>
+            </div>
+            <table><thead><tr><th>Date</th><th>Person</th><th>Type</th><th>Description</th><th>Cost</th><th>Retail</th><th></th></tr></thead>
+            <tbody id="promo-log-table"></tbody></table>
+          </div>
+          <div class="card" style="margin-top:0">
+            <h3>💸 Unpaid Tables</h3>
+            <p style="font-size:0.78rem;color:var(--muted);margin-bottom:10px">Tables where customer did not pay — allocate for morning sort.</p>
+            <div id="unpaid-tables-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MANAGEMENT REPORT -->
+    <div class="page" id="page-mgmt">
+      <div class="section-title">📑 Management Report</div>
+      <div class="form-row" style="max-width:380px;margin-bottom:12px">
+        <div class="form-group"><label>From</label><input type="text" id="mgmt-from" /></div>
+        <div class="form-group"><label>To</label><input type="text" id="mgmt-to" /></div>
+        <div class="form-group" style="display:flex;align-items:flex-end"><button class="btn-sm btn-accent" onclick="renderMgmt()">Generate</button></div>
+      </div>
+      <div id="mgmt-output"></div>
+    </div>
+
+    <!-- CASH UP -->
+    <div class="page" id="page-cashup">
+      <div class="section-title">💵 Daily Cash-Up</div>
+      <div class="grid2">
+        <div>
+          <div class="card"><div class="form-group"><label>Date</label><input type="text" id="cu-date" /></div></div>
+          <div class="card">
+            <h3>📂 Sales by Category (Incl. VAT)</h3>
+            <div class="form-group"><label>Alcohol (R)</label><input type="number" id="cu-alcohol" placeholder="0.00" oninput="calcCashup()" /></div>
+            <div class="form-group"><label>Beverages (R)</label><input type="number" id="cu-bev" placeholder="0.00" oninput="calcCashup()" /></div>
+            <div class="form-group"><label>Wine (R)</label><input type="number" id="cu-wine" placeholder="0.00" oninput="calcCashup()" /></div>
+            <div class="form-group"><label>Food (R)</label><input type="number" id="cu-food" placeholder="0.00" oninput="calcCashup()" /></div>
+            <div class="form-group"><label>Expenses (R)</label><input type="number" id="cu-exp" placeholder="0.00" oninput="calcCashup()" /></div>
+          </div>
+          <div class="card">
+            <h3>💰 Payment Methods</h3>
+            <div class="form-group"><label>Cash (R)</label><input type="number" id="cu-cash" placeholder="0.00" oninput="calcCashup()" /></div>
+            <div class="form-group"><label>Card (R)</label><input type="number" id="cu-card" placeholder="0.00" oninput="calcCashup()" /></div>
+            <div class="form-group"><label>Tips (R)</label><input type="number" id="cu-tips" placeholder="0.00" oninput="calcCashup()" /></div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="position:sticky;top:64px">
+            <h3>📊 Summary</h3>
+            <table style="margin-bottom:9px"><thead><tr><th>Category</th><th style="text-align:right">Incl.VAT</th><th style="text-align:right">VAT</th><th style="text-align:right">Excl.VAT</th></tr></thead><tbody id="cat-vat-table"></tbody></table>
+            <div class="vat-box">
+              <div class="vat-row"><span class="lbl">Gross Incl. VAT</span><span id="r-incvat">R0.00</span></div>
+              <div class="vat-row"><span class="lbl">VAT (15%)</span><span id="r-vat" style="color:var(--muted)">R0.00</span></div>
+              <div class="vat-row"><span class="lbl">Net Excl. VAT</span><span id="r-excvat">R0.00</span></div>
+              <div class="vat-row"><span class="lbl">Less Expenses</span><span id="r-exp" style="color:var(--red)">R0.00</span></div>
+              <hr class="divider" style="margin:4px 0">
+              <div class="vat-row"><span class="lbl">Cash</span><span id="r-cash">R0.00</span></div>
+              <div class="vat-row"><span class="lbl">Card</span><span id="r-card">R0.00</span></div>
+              <div class="vat-row"><span class="lbl">Tips</span><span id="r-tips" style="color:var(--green)">R0.00</span></div>
+              <hr class="divider" style="margin:4px 0">
+              <div class="vat-row total-row"><span>TOTAL INCL. VAT</span><span id="r-total" style="color:var(--accent)">R0.00</span></div>
+              <div style="margin-top:6px;text-align:center" id="r-variance"></div>
+            </div>
+            <div style="margin-top:10px;display:flex;gap:5px">
+              <button class="btn-sm btn-accent" onclick="saveCashup()" style="flex:1">💾 Save</button>
+              <button class="btn-sm" onclick="window.print()">🖨️ Print</button>
+            </div>
+            <div id="cu-msg" style="margin-top:5px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card"><h3>📅 History</h3><div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Incl.VAT</th><th>VAT</th><th>Excl.VAT</th><th>Cash</th><th>Card</th><th>Tips</th><th>Net</th><th></th></tr></thead><tbody id="cashup-history"></tbody></table></div></div>
+    </div>
+
+    <!-- TIPS (Admin) -->
+    <div class="page" id="page-tips">
+      <div class="section-title">💝 Tips & Shift Pay</div>
+      <div class="card"><div class="form-group"><label>Date</label><input type="text" id="tp-date" style="max-width:190px" /></div></div>
+      <div class="grid2">
+        <div class="card"><h3>🍽️ Waiters</h3><div id="waiter-tip-rows"></div></div>
+        <div class="card"><h3>🍺 Bartenders</h3><div id="barman-tip-rows"></div></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <h3 style="margin:0">💰 Summary</h3>
+          <div style="display:flex;gap:5px"><button class="btn-sm btn-accent" onclick="saveTips()">💾 Save</button><button class="btn-sm" onclick="window.print()">🖨️ Print</button></div>
+        </div>
+        <table><thead><tr><th>Staff</th><th>Role</th><th>Tips</th><th>Shift Pay</th><th>Total</th></tr></thead><tbody id="tips-summary"></tbody></table>
+        <div id="tips-msg" style="margin-top:5px"></div>
+      </div>
+      <div class="card"><h3>📅 History</h3><table><thead><tr><th>Date</th><th>Total Tips</th><th>Total Shift Pay</th><th></th></tr></thead><tbody id="tips-history"></tbody></table></div>
+    </div>
+
+    <!-- WAITER TIPS VIEW -->
+    <div class="page" id="page-waiter-tips">
+      <div class="section-title">💝 My Tips — <span id="wt-name-label"></span></div>
+      <div class="card">
+        <h3>📋 My Tables Today</h3>
+        <p style="font-size:0.78rem;color:var(--muted);margin-bottom:10px">Enter what the customer actually paid — tip is calculated automatically.</p>
+        <div id="wt-table-entries"></div>
+        <button class="btn-sm btn-accent" onclick="addTipEntry()" style="margin-top:7px">➕ Add Table</button>
+      </div>
+      <div class="card">
+        <h3>📊 Tips Summary</h3>
+        <table><thead><tr><th>Table</th><th>Order Total</th><th>Customer Paid</th><th style="color:var(--green)">Tip Earned</th></tr></thead><tbody id="wt-summary"></tbody></table>
+        <div style="margin-top:10px;display:flex;gap:9px">
+          <div class="stat-tile" style="flex:1;padding:10px"><div class="label">Total Tips</div><div class="value" id="wt-total-tips">R0.00</div></div>
+          <div class="stat-tile" style="flex:1;padding:10px"><div class="label">Shift Pay</div><div class="value" id="wt-shift-pay">R0.00</div></div>
+          <div class="stat-tile" style="flex:1;padding:10px"><div class="label">Total Earnings</div><div class="value" id="wt-total-earn" style="color:var(--green)">R0.00</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BANK RECON -->
+    <div class="page" id="page-recon">
+      <div class="section-title">🏦 Daily Bank Recon</div>
+      <div class="grid2">
+        <div>
+          <div class="card">
+            <h3>📎 Upload Bank Statement</h3>
+            <div class="upload-zone" onclick="document.getElementById('bank-file').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+              <div style="font-size:1.6rem;margin-bottom:5px">📄</div>
+              <p style="font-size:0.8rem;color:var(--muted)"><strong>Click or drag & drop</strong><br>PDF or CSV accepted</p>
+              <input type="file" id="bank-file" accept=".pdf,.csv" onchange="handleBankFile(event)" />
+            </div>
+            <div id="bank-file-info" style="display:none" class="alert alert-info"></div>
+            <div id="bank-transactions" style="display:none">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong style="font-size:0.81rem">Transactions</strong><span id="bank-tx-count" style="font-size:0.74rem;color:var(--muted)"></span></div>
+              <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:7px"><div id="bank-tx-list"></div></div>
+              <div style="margin-top:8px;display:flex;gap:8px">
+                <div class="stat-tile" style="flex:1;padding:9px"><div class="label">Credits</div><div class="value" style="font-size:0.95rem" id="bank-credits">R0.00</div></div>
+                <div class="stat-tile" style="flex:1;padding:9px"><div class="label">Debits</div><div class="value" style="font-size:0.95rem;color:var(--red)" id="bank-debits">R0.00</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>📅 Manual Entry</h3>
+            <div class="form-group"><label>Date</label><input type="text" id="rc-date" /></div>
+            <div class="form-group"><label>Expected Cash (R)</label><input type="number" id="rc-expected" placeholder="0.00" oninput="calcRecon()" /></div>
+            <div class="form-group"><label>Actual Cash (R)</label><input type="number" id="rc-actual" placeholder="0.00" oninput="calcRecon()" /></div>
+            <div class="form-group"><label>Card Machine Total (R)</label><input type="number" id="rc-card" placeholder="0.00" oninput="calcRecon()" /></div>
+            <div class="form-group"><label>Bank Deposit (R)</label><input type="number" id="rc-deposit" placeholder="0.00" oninput="calcRecon()" /></div>
+            <div class="form-group"><label>Bank Credits (R) <span style="color:var(--accent);font-size:0.71rem" id="bank-autofill-label"></span></label><input type="number" id="rc-bank-total" placeholder="0.00" oninput="calcRecon()" /></div>
+            <div class="form-group"><label>Notes</label><textarea id="rc-notes" rows="2"></textarea></div>
+            <button class="btn-sm btn-accent" onclick="saveRecon()" style="width:100%">💾 Save</button>
+            <div id="rc-msg" style="margin-top:5px"></div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="position:sticky;top:64px">
+            <h3>📊 Result</h3>
+            <div style="text-align:center;margin-bottom:11px">
+              <div style="font-size:0.76rem;color:var(--muted);margin-bottom:2px">Total Variance</div>
+              <div id="rc-variance" style="font-size:1.8rem;font-weight:700;color:var(--green)">R0.00</div>
+              <div id="rc-variance-label" style="font-size:0.77rem;color:var(--muted)">Balanced</div>
+            </div>
+            <div class="vat-box">
+              <div class="vat-row"><span class="lbl">Expected Cash</span><span id="rc-r-expected">R0.00</span></div>
+              <div class="vat-row"><span class="lbl">Actual Cash</span><span id="rc-r-actual">R0.00</span></div>
+              <div class="vat-row"><span class="lbl">Cash Variance</span><span id="rc-r-cashvar" style="font-weight:600">R0.00</span></div>
+              <hr class="divider" style="margin:4px 0">
+              <div class="vat-row"><span class="lbl">Card Machine</span><span id="rc-r-card">R0.00</span></div>
+              <div class="vat-row"><span class="lbl">Bank Credits</span><span id="rc-r-bank">R0.00</span></div>
+              <div class="vat-row"><span class="lbl">Card vs Bank</span><span id="rc-r-cardvar" style="font-weight:600">R0.00</span></div>
+              <hr class="divider" style="margin:4px 0">
+              <div class="vat-row total-row"><span>Status</span><span id="rc-r-status" class="badge badge-green">Balanced</span></div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:12px"><h3>📅 History</h3><table><thead><tr><th>Date</th><th>Expected</th><th>Actual</th><th>Variance</th><th>Status</th></tr></thead><tbody id="recon-history"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDERS -->
+    <div class="page" id="page-orders">
+      <div class="section-title">🍽️ Place Order</div>
+      <div class="grid2" style="gap:12px">
+        <div>
+          <div class="card">
+            <h3>📍 Select Table / Customer</h3>
+            <div style="margin-bottom:9px">
+              <div style="font-size:0.74rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">⭐ Regulars & Discounts</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px" id="regulars-grid"></div>
+            </div>
+            <hr class="divider" style="margin:7px 0">
+            <div style="font-size:0.74rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">🪑 Tables</div>
+            <div class="table-grid" id="table-grid"></div>
+          </div>
+          <div class="card" id="menu-section" style="display:none">
+            <h3>🍽️ Menu — <span id="selected-table-label"></span></h3>
+            <div class="form-group"><input type="text" id="menu-search" placeholder="Search..." oninput="renderMenuTiles()" /></div>
+            <div class="cat-filter" id="cat-filter"></div>
+            <div class="menu-grid" id="menu-tiles"></div>
+          </div>
+        </div>
+        <div>
+          <div class="card" id="current-order-section" style="display:none">
+            <h3>🛒 Current Order</h3>
+            <div id="discount-banner" style="display:none;margin-bottom:8px"></div>
+            <div class="form-group"><label>Waiter</label><select id="order-waiter"></select></div>
+            <div id="order-items-list" style="margin-bottom:8px"></div>
+            <div style="font-size:0.78rem;color:var(--muted);margin-bottom:2px" id="order-subtotal-line"></div>
+            <div style="font-size:0.78rem;color:var(--red);margin-bottom:2px" id="order-discount-line"></div>
+            <div style="display:flex;justify-content:space-between;font-weight:700;margin-bottom:10px"><span>Total:</span><span id="order-total-display" style="color:var(--accent)">R0.00</span></div>
+            <div class="form-group"><label>Notes</label><textarea id="order-notes" rows="2" placeholder="e.g. no onions..."></textarea></div>
+            <div style="display:flex;gap:5px">
+              <button class="btn-sm btn-accent" onclick="submitOrder()" style="flex:1">📤 Send Order</button>
+              <button class="btn-sm btn-danger" onclick="clearOrder()">✕</button>
+            </div>
+            <div id="order-msg" style="margin-top:5px"></div>
+          </div>
+          <!-- CLOSE TABLE -->
+          <div class="card" id="close-table-section" style="display:none">
+            <h3>🧾 Close Table <span id="close-table-num"></span></h3>
+            <div id="close-table-summary"></div>
+            <div style="display:flex;gap:5px;margin-top:10px;flex-wrap:wrap">
+              <button class="btn-sm btn-accent" onclick="closeTablePrintBill()" style="flex:1">🧾 Print Customer Bill</button>
+              <button class="btn-sm btn-blue" onclick="closeTablePrintKitchen()" style="flex:1">🍳 Print Kitchen Slip</button>
+              <button class="btn-sm btn-danger" onclick="markTableUnpaid()" style="flex:1">💸 Didn't Pay</button>
+            </div>
+          </div>
+          <div class="card"><h3>📋 Active Orders</h3><div id="active-orders-list"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BAR VIEW -->
+    <div class="page" id="page-bar">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="section-title" style="margin:0">🍺 Bar — Live Orders</div>
+        <button class="btn-sm" onclick="renderBarOrders()">🔄 Refresh</button>
+      </div>
+      <div id="bar-orders-queue"></div>
+    </div>
+
+    <!-- KITCHEN VIEW -->
+    <div class="page" id="page-kitchen">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="section-title" style="margin:0">👨‍🍳 Kitchen — Live Orders</div>
+        <button class="btn-sm" onclick="renderKitchenOrders()">🔄 Refresh</button>
+      </div>
+      <div id="kitchen-orders-queue"></div>
+    </div>
+
+    <!-- MENU -->
+    <div class="page" id="page-menu">
+      <div class="section-title">📋 Menu Management</div>
+      <div class="grid2">
+        <div class="card">
+          <h3>➕ Add Item</h3>
+          <div class="form-group"><label>Name</label><input type="text" id="mi-name" /></div>
+          <div class="form-row">
+            <div class="form-group"><label>Price (R)</label><input type="number" id="mi-price" /></div>
+            <div class="form-group"><label>Category</label><select id="mi-cat"><option>Burgers & Pregos</option><option>Platters</option><option>Light Meals</option><option>Ribs & Chicken</option><option>Wings & Strips</option><option>Pizza</option><option>White Wine</option><option>Red Wine</option><option>Wine by the Glass</option><option>Drinks Specials</option><option>Spirits</option><option>Beer & Cider</option><option>Soft Drinks</option><option>Other</option></select></div>
+          </div>
+          <div class="form-group"><label>Routes To</label><select id="mi-route"><option value="bar">Bar</option><option value="kitchen">Kitchen</option><option value="both">Both</option></select></div>
+          <button class="btn-sm btn-accent" onclick="addMenuItem()" style="width:100%">➕ Add</button>
+          <div id="mi-msg" style="margin-top:5px"></div>
+        </div>
+        <div class="card">
+          <h3>🔍 Filter</h3>
+          <div class="form-group"><input type="text" id="menu-filter" placeholder="Search..." oninput="renderMenuList()" /></div>
+          <div class="form-group"><select id="menu-cat-filter" onchange="renderMenuList()"><option value="">All Categories</option><option>Burgers & Pregos</option><option>Platters</option><option>Light Meals</option><option>Ribs & Chicken</option><option>Wings & Strips</option><option>Pizza</option><option>White Wine</option><option>Red Wine</option><option>Wine by the Glass</option><option>Drinks Specials</option><option>Spirits</option><option>Beer & Cider</option><option>Soft Drinks</option><option>Other</option></select></div>
+        </div>
+      </div>
+      <div class="card"><h3>📋 Menu Items (<span id="menu-count">0</span>)</h3><div id="menu-list"></div></div>
+    </div>
+
+    <!-- BAR STOCK -->
+    <div class="page" id="page-stock">
+      <div class="section-title">📦 Bar Stock</div>
+      <!-- Admin only: add stock + photo upload -->
+      <div id="bar-add-section">
+        <div class="grid2">
+          <div class="card">
+            <h3>➕ Add Stock Item (Admin)</h3>
+            <div class="form-group"><label>Name</label><input type="text" id="st-name" /></div>
+            <div class="form-row">
+              <div class="form-group"><label>Category</label><select id="st-cat"><option>Spirits</option><option>Beer</option><option>Cider</option><option>Wine</option><option>Shots</option><option>RTD / Premix</option><option>Soft Drinks</option><option>Mixers</option><option>Water</option><option>Energy Drinks</option><option>Juice</option><option>Other</option></select></div>
+              <div class="form-group"><label>Unit</label><select id="st-unit"><option>Tot (25ml)</option><option>Each</option><option>Liter</option><option>Bottle 750ml</option><option>Glass 250ml</option><option>Kilo gram</option></select></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Opening Qty</label><input type="number" id="st-qty" /></div>
+              <div class="form-group"><label>Alert ≤</label><input type="number" id="st-min" /></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Cost Price (R)</label><input type="number" id="st-cost" /></div>
+              <div class="form-group"><label>Retail Price (R)</label><input type="number" id="st-retail" /></div>
+            </div>
+            <button class="btn-sm btn-accent" onclick="addStockItem('bar')" style="width:100%">➕ Add to Bar</button>
+            <div id="st-msg" style="margin-top:5px"></div>
+          </div>
+          <div class="card">
+            <h3>📸 New Stock Delivery — AI Photo Read</h3>
+            <p style="font-size:0.78rem;color:var(--muted);margin-bottom:10px">Drop a photo or PDF of the delivery note — Claude will read it and auto-fill the delivery list.</p>
+            <div class="photo-drop" id="bar-photo-drop" onclick="document.getElementById('stock-photo').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleStockPhotoDrop(event,'bar')">
+              <div style="font-size:1.8rem;margin-bottom:5px">📷</div>
+              <p style="font-size:0.79rem;color:var(--muted)"><strong>Click or drop delivery photo/invoice</strong><br>Photo or PDF · AI will extract items automatically</p>
+              <input type="file" id="stock-photo" accept="image/*,.pdf" onchange="handleStockPhoto(event,'bar')" />
+            </div>
+            <div id="bar-photo-result" style="margin-top:8px"></div>
+            <div class="card" style="margin-top:8px;padding:12px">
+              <h3 style="margin-bottom:8px">📋 Delivery List <span id="bar-del-count" style="color:var(--muted);font-weight:400"></span></h3>
+              <div class="form-row">
+                <div class="form-group"><label>Item Name</label><input type="text" id="del-name" /></div>
+                <div class="form-group"><label>Qty Received</label><input type="number" id="del-qty" /></div>
+                <div class="form-group"><label>Pack Size</label><input type="text" id="del-pack" placeholder="e.g. 12x330ml" /></div>
+              </div>
+              <button class="btn-sm btn-accent" onclick="addDelivery('bar')" style="width:100%">➕ Add Item Manually</button>
+              <div id="del-list" style="margin-top:8px"></div>
+              <div style="display:flex;gap:6px;margin-top:8px">
+                <button class="btn-sm btn-success" onclick="applyDelivery('bar')" style="flex:1">✅ Apply & Update Bar Stock</button>
+                <button class="btn-sm" onclick="printDeliveryNote('bar')">🖨️ Print Delivery Note</button>
+              </div>
+              <div id="del-msg" style="margin-top:5px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;gap:7px;align-items:center;margin-bottom:10px">
+          <h3 style="margin:0">📦 Bar Stock (<span id="bar-stock-count">0</span>)</h3>
+          <input type="text" id="bar-stock-search" placeholder="Search..." style="max-width:200px" oninput="renderBarStock()" />
+          <button class="btn-sm btn-accent no-print" onclick="saveStockTake('bar')">💾 Save Stock Take</button>
+        </div>
+        <div id="st-take-msg" style="margin-bottom:5px"></div>
+        <div id="bar-stock-list"></div>
+      </div>
+    </div>
+
+    <!-- KITCHEN STOCK -->
+    <div class="page" id="page-kitchen-stock">
+      <div class="section-title">🥩 Kitchen Stock</div>
+      <div id="kitchen-add-section">
+        <div class="grid2">
+        <div class="card">
+          <h3>➕ Add Kitchen Item (Admin)</h3>
+          <div class="form-row">
+            <div class="form-group"><label>Name</label><input type="text" id="ks-name" /></div>
+            <div class="form-group"><label>Category</label><select id="ks-cat"><option>Meat & Poultry</option><option>Pork</option><option>Seafood</option><option>Vegetables</option><option>Dairy</option><option>Dry Goods</option><option>Sauces</option><option>Herbs & Spices</option><option>Frozen</option><option>Bread & Dough</option><option>Cheese</option><option>Other</option></select></div>
+            <div class="form-group"><label>Unit</label><select id="ks-unit"><option>Each</option><option>Kilo gram</option><option>Gram</option><option>Liter</option><option>ml</option><option>portion</option><option>pack</option></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Opening Qty</label><input type="number" id="ks-qty" /></div>
+            <div class="form-group"><label>Alert ≤</label><input type="number" id="ks-min" /></div>
+            <div class="form-group"><label>Portion Size</label><input type="text" id="ks-portion" placeholder="e.g. 200g per serve" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Cost Price (R)</label><input type="number" id="ks-cost" /></div>
+            <div class="form-group"><label>Retail Price (R)</label><input type="number" id="ks-retail" /></div>
+          </div>
+          <button class="btn-sm btn-accent" onclick="addStockItem('kitchen')" style="width:100%">➕ Add to Kitchen</button>
+          <div id="ks-msg" style="margin-top:5px"></div>
+        </div>
+        <div class="card">
+            <h3>📸 Kitchen Delivery — AI Photo Read</h3>
+            <p style="font-size:0.78rem;color:var(--muted);margin-bottom:10px">Drop a photo or PDF of the kitchen delivery note — Claude will read it and auto-fill the list.</p>
+            <div class="photo-drop" id="kitchen-photo-drop" onclick="document.getElementById('kitchen-photo').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleStockPhotoDrop(event,'kitchen')">
+              <div style="font-size:1.8rem;margin-bottom:5px">📷</div>
+              <p style="font-size:0.79rem;color:var(--muted)"><strong>Click or drop delivery photo/invoice</strong><br>Photo or PDF · AI will extract items automatically</p>
+              <input type="file" id="kitchen-photo" accept="image/*,.pdf" onchange="handleStockPhoto(event,'kitchen')" />
+            </div>
+            <div id="kitchen-photo-result" style="margin-top:8px"></div>
+            <div class="card" style="margin-top:8px;padding:12px">
+              <h3 style="margin-bottom:8px">📋 Kitchen Delivery List <span id="kitchen-del-count" style="color:var(--muted);font-weight:400"></span></h3>
+              <div class="form-row">
+                <div class="form-group"><label>Item Name</label><input type="text" id="kdel-name" /></div>
+                <div class="form-group"><label>Qty Received</label><input type="number" id="kdel-qty" /></div>
+                <div class="form-group"><label>Pack Size</label><input type="text" id="kdel-pack" placeholder="e.g. 5kg bag" /></div>
+              </div>
+              <button class="btn-sm btn-accent" onclick="addDelivery('kitchen')" style="width:100%">➕ Add Item Manually</button>
+              <div id="kdel-list" style="margin-top:8px"></div>
+              <div style="display:flex;gap:6px;margin-top:8px">
+                <button class="btn-sm btn-success" onclick="applyDelivery('kitchen')" style="flex:1">✅ Apply & Update Kitchen Stock</button>
+                <button class="btn-sm" onclick="printDeliveryNote('kitchen')">🖨️ Print Delivery Note</button>
+              </div>
+              <div id="kdel-msg" style="margin-top:5px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;gap:7px;align-items:center;margin-bottom:10px">
+          <h3 style="margin:0">🥩 Kitchen Stock (<span id="kitchen-stock-count">0</span>)</h3>
+          <input type="text" id="kitchen-stock-search" placeholder="Search..." style="max-width:200px" oninput="renderKitchenStock()" />
+          <button class="btn-sm btn-accent no-print" onclick="saveStockTake('kitchen')">💾 Save Stock Take</button>
+        </div>
+        <div id="ks-take-msg" style="margin-bottom:5px"></div>
+        <div id="kitchen-stock-list"></div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="page" id="page-reports">
+      <div class="section-title">📈 Monthly Sales Report</div>
+      <div class="card">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+          <select id="report-month" onchange="renderReports()"></select>
+          <button class="btn-sm" onclick="window.print()">🖨️ Print</button>
+        </div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Alcohol</th><th>Bev</th><th>Wine</th><th>Food</th><th>Exp</th><th>Gross Incl.VAT</th><th>VAT</th><th>Net Excl.VAT</th><th>Cash</th><th>Card</th><th>Tips</th><th>Net Total</th></tr></thead><tbody id="report-body"></tbody><tfoot id="report-foot"></tfoot></table></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="section-title">⚙️ Settings</div>
+      <div class="grid2">
+        <div class="card"><h3>🔐 Admin Password</h3><div class="form-group"><label>New Password</label><input type="password" id="new-admin-pass" /></div><button class="btn-sm btn-accent" onclick="changePass('admin')">Update</button></div>
+        <div class="card"><h3>🔐 Other Passwords</h3>
+          <div class="form-group"><label>Barman</label><input type="password" id="new-barman-pass" /></div>
+          <div class="form-group"><label>Kitchen</label><input type="password" id="new-kitchen-pass" /></div>
+          <div class="form-group"><label>Waiter (shared)</label><input type="password" id="new-waiter-pass" /></div>
+          <button class="btn-sm btn-accent" onclick="changePass('others')">Update</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>👥 Staff</h3>
+        <div class="form-row">
+          <div class="form-group"><label>Waiters (comma separated)</label><input type="text" id="staff-waiters" /></div>
+          <div class="form-group"><label>Bartenders (comma separated)</label><input type="text" id="staff-bartenders" /></div>
+        </div>
+        <button class="btn-sm btn-accent" onclick="saveStaff()">💾 Save</button><div id="staff-msg" style="margin-top:5px"></div>
+      </div>
+      <div class="card">
+        <h3>⭐ Regulars & Discounts</h3>
+        <div id="regulars-settings-list"></div>
+        <hr class="divider">
+        <div class="form-row">
+          <div class="form-group"><label>Name</label><input type="text" id="reg-name" /></div>
+          <div class="form-group"><label>Discount %</label><input type="number" id="reg-disc" placeholder="0" /></div>
+          <div class="form-group"><label>Type</label><select id="reg-type"><option value="regular">Regular</option><option value="management">Management Tab</option><option value="promo">Promo</option></select></div>
+        </div>
+        <button class="btn-sm btn-accent" onclick="addRegular()">➕ Add Regular</button>
+        <div id="reg-msg" style="margin-top:5px"></div>
+      </div>
+      <div id="pass-msg" style="margin-top:5px"></div>
+      <div class="card"><h3>🗑️ Danger Zone</h3><button class="btn-sm btn-danger" onclick="clearAllData()">⚠️ Clear All Data</button></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ============ STATE ============
+let S={role:'admin',selectedTable:null,activeCat:'All',currentDiscount:0,currentCustomer:null,waiterName:null,barmanName:null};
+let currentOrderItems=[];
+let bankTransactions=[];
+let waiterTipEntries=[];
+
+// ============ STORAGE ============
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
+const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}};
+
+// ============ DATA ============
+let passwords=load('hitw_pw',{admin:'admin123',barman:'bar123',waiter:'wait123',kitchen:'kit123',tanya:'tanya123',kim:'kim123',marcus:'marcus123',chris:'chris123',k:'k123'});
+let staffList=load('hitw_staff',{waiters:['Tanya','Kim','Marcus','Chris','K'],bartenders:['Matthew','Festus']});
+let regulars=load('hitw_regulars',[
+  {id:1,name:'Ty',discount:0,type:'management'},
+  {id:2,name:'Amanda',discount:0,type:'management'},
+  {id:3,name:'Megan',discount:25,type:'promo'},
+  {id:4,name:'Joshua',discount:50,type:'promo'},
+  {id:5,name:'Ian',discount:10,type:'regular'},
+  {id:6,name:'Wesley',discount:50,type:'promo'},
+]);
+let cashups=load('hitw_cashups',[]);
+let tipsData=load('hitw_tips',[]);
+let reconData=load('hitw_recon',[]);
+let orders=load('hitw_orders',[]);
+let promoLog=load('hitw_promo',[]);
+let unpaidTables=load('hitw_unpaid',[]);
+let waiterTipsLog=load('hitw_waitertips',[]);
+
+let menuItems=load('hitw_menu',[
+  {id:1,name:'Original Burger',price:99,cat:'Burgers & Pregos',route:'kitchen'},
+  {id:2,name:'Cheeseburger',price:119,cat:'Burgers & Pregos',route:'kitchen'},
+  {id:3,name:'Bacon & Cheese Burger',price:135,cat:'Burgers & Pregos',route:'kitchen'},
+  {id:4,name:'Mushroom Sauce Burger',price:119,cat:'Burgers & Pregos',route:'kitchen'},
+  {id:5,name:'Pepper Sauce Burger',price:119,cat:'Burgers & Pregos',route:'kitchen'},
+  {id:6,name:'Cheese & Mushroom Sauce Burger',price:129,cat:'Burgers & Pregos',route:'kitchen'},
+  {id:7,name:'Cheese & Pepper Sauce Burger',price:129,cat:'Burgers & Pregos',route:'kitchen'},
+  {id:8,name:'Cheese & Chilli Burger',price:129,cat:'Burgers & Pregos',route:'kitchen'},
+  {id:9,name:'Grilled Chicken Burger',price:129,cat:'Burgers & Pregos',route:'kitchen'},
+  {id:10,name:'Chicken Prego',price:89,cat:'Burgers & Pregos',route:'kitchen'},
+  {id:11,name:'Beef Prego',price:99,cat:'Burgers & Pregos',route:'kitchen'},
+  {id:12,name:'½kg Ribs & Wings & Chips/Salad',price:235,cat:'Platters',route:'kitchen'},
+  {id:13,name:'Pub Snack Platter',price:289,cat:'Platters',route:'kitchen'},
+  {id:14,name:'The Breakfast Bun',price:69,cat:'Light Meals',route:'kitchen'},
+  {id:15,name:'Chicken Halloumi Wrap & Chips',price:139,cat:'Light Meals',route:'kitchen'},
+  {id:16,name:'Chicken Wrap & Chips',price:109,cat:'Light Meals',route:'kitchen'},
+  {id:17,name:'Halloumi Fingers',price:80,cat:'Light Meals',route:'kitchen'},
+  {id:18,name:'Chicken Stack & Chips',price:169,cat:'Light Meals',route:'kitchen'},
+  {id:19,name:'Cheese Grillers (8)',price:55,cat:'Light Meals',route:'kitchen'},
+  {id:20,name:'Chips',price:45,cat:'Light Meals',route:'kitchen'},
+  {id:21,name:'½kg BBQ Pork Ribs',price:195,cat:'Ribs & Chicken',route:'kitchen'},
+  {id:22,name:'1kg BBQ Pork Ribs',price:335,cat:'Ribs & Chicken',route:'kitchen'},
+  {id:23,name:'Lemon & Herb ½ Chicken',price:125,cat:'Ribs & Chicken',route:'kitchen'},
+  {id:24,name:'Lemon & Herb Full Chicken',price:195,cat:'Ribs & Chicken',route:'kitchen'},
+  {id:25,name:'Peri Peri ½ Chicken',price:125,cat:'Ribs & Chicken',route:'kitchen'},
+  {id:26,name:'Peri Peri Full Chicken',price:195,cat:'Ribs & Chicken',route:'kitchen'},
+  {id:27,name:'Xai Xai ½ Chicken',price:139,cat:'Ribs & Chicken',route:'kitchen'},
+  {id:28,name:'Xai Xai Full Chicken',price:199,cat:'Ribs & Chicken',route:'kitchen'},
+  {id:29,name:'Wings & Chips/Salad',price:95,cat:'Wings & Strips',route:'kitchen'},
+  {id:30,name:'Double Wings & Chips/Salad',price:165,cat:'Wings & Strips',route:'kitchen'},
+  {id:31,name:'Chicken Strips & Chips',price:85,cat:'Wings & Strips',route:'kitchen'},
+  {id:32,name:'Chicken Strips, Wings & Chips',price:179,cat:'Wings & Strips',route:'kitchen'},
+  {id:33,name:'Focaccia',price:90,cat:'Pizza',route:'kitchen'},
+  {id:34,name:'Margherita Pizza',price:99,cat:'Pizza',route:'kitchen'},
+  {id:35,name:'Hole In The Wall Pizza',price:175,cat:'Pizza',route:'kitchen'},
+  {id:36,name:'The Local Legend Pizza',price:139,cat:'Pizza',route:'kitchen'},
+  {id:37,name:'The Wall Breaker Pizza',price:149,cat:'Pizza',route:'kitchen'},
+  {id:38,name:'Regina Pizza',price:119,cat:'Pizza',route:'kitchen'},
+  {id:39,name:'Hawaiian Pizza',price:119,cat:'Pizza',route:'kitchen'},
+  {id:40,name:'Mexicana Pizza',price:159,cat:'Pizza',route:'kitchen'},
+  {id:41,name:'BBQ Chicken Pizza',price:132,cat:'Pizza',route:'kitchen'},
+  {id:42,name:'HauteCabrière Chardonnay PN',price:299,cat:'White Wine',route:'bar'},
+  {id:43,name:"Leopard's Leap Sauvignon Blanc",price:149,cat:'White Wine',route:'bar'},
+  {id:44,name:"Leopard's Leap Chenin Blanc",price:149,cat:'White Wine',route:'bar'},
+  {id:45,name:'La Motte Sauvignon Blanc',price:199,cat:'White Wine',route:'bar'},
+  {id:46,name:'Cederberg Merlot Shiraz',price:229,cat:'Red Wine',route:'bar'},
+  {id:47,name:'Beyerskloof Pinotage',price:179,cat:'Red Wine',route:'bar'},
+  {id:48,name:"Leopard's Leap Merlot",price:139,cat:'Red Wine',route:'bar'},
+  {id:49,name:'Sauvignon Blanc (glass)',price:55,cat:'Wine by the Glass',route:'bar'},
+  {id:50,name:'Merlot (glass)',price:55,cat:'Wine by the Glass',route:'bar'},
+  {id:51,name:'2x Double Vodka & Monster',price:90,cat:'Drinks Specials',route:'bar'},
+  {id:52,name:'2x Double Vodka & Coke',price:79,cat:'Drinks Specials',route:'bar'},
+  {id:53,name:'2x Double Whiskey',price:79,cat:'Drinks Specials',route:'bar'},
+  {id:54,name:'2x Double G&T',price:79,cat:'Drinks Specials',route:'bar'},
+  {id:55,name:'2x Double Spiced Gold',price:79,cat:'Drinks Specials',route:'bar'},
+  {id:56,name:'2x Double Tipo Tinto',price:79,cat:'Drinks Specials',route:'bar'},
+  {id:57,name:'2x 300ml Mimosas',price:70,cat:'Drinks Specials',route:'bar'},
+  {id:58,name:'4x Jose Cuervo',price:120,cat:'Drinks Specials',route:'bar'},
+  {id:59,name:'4x Jägermeister',price:120,cat:'Drinks Specials',route:'bar'},
+  {id:60,name:'2x Castle Lite Draught',price:90,cat:'Drinks Specials',route:'bar'},
+  {id:61,name:'2x Double Buffelsfontein',price:75,cat:'Drinks Specials',route:'bar'},
+  {id:62,name:'2x Double Klipdrift',price:79,cat:'Drinks Specials',route:'bar'},
+  {id:63,name:'2x Double Richelieu',price:79,cat:'Drinks Specials',route:'bar'},
+]);
+
+let barStock=load('hitw_barstock',[
+  {id:1,name:'Absolut Vodka',cat:'Spirits',unit:'Tot (25ml)',qty:19,min:5,cost:0,retail:0,closing:null},
+  {id:2,name:'Bacardi',cat:'Spirits',unit:'Tot (25ml)',qty:31,min:5,cost:0,retail:0,closing:null},
+  {id:3,name:'Belgravia Gin',cat:'Spirits',unit:'Tot (25ml)',qty:63,min:10,cost:0,retail:0,closing:null},
+  {id:4,name:'Bells Whisky',cat:'Spirits',unit:'Tot (25ml)',qty:19,min:5,cost:0,retail:0,closing:null},
+  {id:5,name:'Buffelsfontein',cat:'Spirits',unit:'Tot (25ml)',qty:52,min:10,cost:0,retail:0,closing:null},
+  {id:6,name:'Butlers Blue Schnapps',cat:'Shots',unit:'Tot (25ml)',qty:47,min:8,cost:0,retail:0,closing:null},
+  {id:7,name:'Butlers Peppermint',cat:'Shots',unit:'Tot (25ml)',qty:54,min:8,cost:0,retail:0,closing:null},
+  {id:8,name:'Butlers Strawberry',cat:'Shots',unit:'Tot (25ml)',qty:31,min:8,cost:0,retail:0,closing:null},
+  {id:9,name:'Captain Morgan Dark',cat:'Spirits',unit:'Tot (25ml)',qty:31,min:5,cost:0,retail:0,closing:null},
+  {id:10,name:'Captain Morgan Spiced',cat:'Spirits',unit:'Tot (25ml)',qty:43,min:8,cost:0,retail:0,closing:null},
+  {id:11,name:'Don Julio Blanco',cat:'Spirits',unit:'Tot (25ml)',qty:5,min:2,cost:0,retail:0,closing:null},
+  {id:12,name:'Famous Grouse',cat:'Spirits',unit:'Tot (25ml)',qty:15,min:4,cost:0,retail:0,closing:null},
+  {id:13,name:'Fireball',cat:'Shots',unit:'Tot (25ml)',qty:29,min:6,cost:0,retail:0,closing:null},
+  {id:14,name:'Gordons Gin',cat:'Spirits',unit:'Tot (25ml)',qty:27,min:6,cost:0,retail:0,closing:null},
+  {id:15,name:'Grey Goose Vodka',cat:'Spirits',unit:'Tot (25ml)',qty:30,min:5,cost:0,retail:0,closing:null},
+  {id:16,name:'Hennessy',cat:'Spirits',unit:'Tot (25ml)',qty:9,min:2,cost:0,retail:0,closing:null},
+  {id:17,name:'Jack Daniels',cat:'Spirits',unit:'Tot (25ml)',qty:20,min:5,cost:0,retail:0,closing:null},
+  {id:18,name:'Jägermeister',cat:'Shots',unit:'Tot (25ml)',qty:102,min:15,cost:0,retail:0,closing:null},
+  {id:19,name:'Jameson',cat:'Spirits',unit:'Tot (25ml)',qty:8,min:3,cost:0,retail:0,closing:null},
+  {id:20,name:'Johnnie Walker Red',cat:'Spirits',unit:'Tot (25ml)',qty:59,min:10,cost:0,retail:0,closing:null},
+  {id:21,name:'Jose Cuervo Gold',cat:'Shots',unit:'Tot (25ml)',qty:156,min:20,cost:0,retail:0,closing:null},
+  {id:22,name:'Klipdrift Premium',cat:'Spirits',unit:'Tot (25ml)',qty:26,min:5,cost:0,retail:0,closing:null},
+  {id:23,name:'Richelieu',cat:'Spirits',unit:'Tot (25ml)',qty:13,min:4,cost:0,retail:0,closing:null},
+  {id:24,name:'Tanqueray Gin',cat:'Spirits',unit:'Tot (25ml)',qty:26,min:6,cost:0,retail:0,closing:null},
+  {id:25,name:'Vat 69',cat:'Spirits',unit:'Tot (25ml)',qty:57,min:10,cost:0,retail:0,closing:null},
+  {id:26,name:'Black Label Draught',cat:'Beer',unit:'Liter',qty:43.5,min:10,cost:0,retail:0,closing:null},
+  {id:27,name:'Castle Lite Draught',cat:'Beer',unit:'Liter',qty:10.5,min:5,cost:0,retail:0,closing:null},
+  {id:28,name:'Castle Lite Dumpie',cat:'Beer',unit:'Each',qty:26,min:10,cost:0,retail:0,closing:null},
+  {id:29,name:'Corona',cat:'Beer',unit:'Each',qty:15,min:6,cost:0,retail:0,closing:null},
+  {id:30,name:'Guinness Draught',cat:'Beer',unit:'Each',qty:18,min:6,cost:0,retail:0,closing:null},
+  {id:31,name:'Heineken',cat:'Beer',unit:'Each',qty:9,min:4,cost:0,retail:0,closing:null},
+  {id:32,name:'Stella Artois',cat:'Beer',unit:'Each',qty:9,min:4,cost:0,retail:0,closing:null},
+  {id:33,name:'Windhoek Draught',cat:'Beer',unit:'Each',qty:21,min:8,cost:0,retail:0,closing:null},
+  {id:34,name:'Hunters Dry',cat:'Cider',unit:'Each',qty:19,min:6,cost:0,retail:0,closing:null},
+  {id:35,name:'Hunters Gold',cat:'Cider',unit:'Each',qty:14,min:6,cost:0,retail:0,closing:null},
+  {id:36,name:'Savanna Dry',cat:'Cider',unit:'Each',qty:8,min:4,cost:0,retail:0,closing:null},
+  {id:37,name:'Beyerskloof Pinotage',cat:'Wine',unit:'Bottle 750ml',qty:2,min:2,cost:0,retail:0,closing:null},
+  {id:38,name:'Haute Cabrière Chardonnay PN',cat:'Wine',unit:'Bottle 750ml',qty:4,min:2,cost:0,retail:0,closing:null},
+  {id:39,name:'Coke',cat:'Soft Drinks',unit:'Each',qty:19,min:8,cost:0,retail:0,closing:null},
+  {id:40,name:'Coke Zero',cat:'Soft Drinks',unit:'Each',qty:35,min:10,cost:0,retail:0,closing:null},
+  {id:41,name:'Sprite',cat:'Soft Drinks',unit:'Each',qty:64,min:12,cost:0,retail:0,closing:null},
+  {id:42,name:'Monster Original',cat:'Energy Drinks',unit:'Each',qty:7,min:4,cost:0,retail:0,closing:null},
+  {id:43,name:'Tonic',cat:'Mixers',unit:'Each',qty:1,min:6,cost:0,retail:0,closing:null},
+  {id:44,name:'Water Still',cat:'Water',unit:'Each',qty:2,min:5,cost:0,retail:0,closing:null},
+]);
+
+let kitchenStock=load('hitw_kstock',[
+  {id:1,name:'Beef Burger Patty',cat:'Meat & Poultry',unit:'Each',qty:0,min:10,cost:0,retail:0,portion:'1 per burger',closing:null},
+  {id:2,name:'Bacon',cat:'Meat & Poultry',unit:'Each',qty:0,min:5,cost:0,retail:0,portion:'2 rashers',closing:null},
+  {id:3,name:'Chicken Fillet',cat:'Meat & Poultry',unit:'Each',qty:0,min:6,cost:0,retail:0,portion:'1 per portion',closing:null},
+  {id:4,name:'Chicken Wings',cat:'Meat & Poultry',unit:'Each',qty:0,min:20,cost:0,retail:0,portion:'6 per portion',closing:null},
+  {id:5,name:'Chicken Strips',cat:'Meat & Poultry',unit:'Each',qty:0,min:10,cost:0,retail:0,portion:'5 per portion',closing:null},
+  {id:6,name:'Pork Ribs 500g',cat:'Pork',unit:'Each',qty:0,min:5,cost:0,retail:0,portion:'500g rack',closing:null},
+  {id:7,name:'Cheese Grillers',cat:'Meat & Poultry',unit:'Each',qty:0,min:8,cost:0,retail:0,portion:'8 per portion',closing:null},
+  {id:8,name:'Halloumi',cat:'Cheese',unit:'Each',qty:0,min:2,cost:0,retail:0,portion:'½ block',closing:null},
+  {id:9,name:'Burger Buns',cat:'Bread & Dough',unit:'Each',qty:0,min:20,cost:0,retail:0,portion:'1 per burger',closing:null},
+  {id:10,name:'Portugese Roll',cat:'Bread & Dough',unit:'Each',qty:0,min:10,cost:0,retail:0,portion:'1 per prego',closing:null},
+  {id:11,name:'Pizza Base',cat:'Bread & Dough',unit:'Each',qty:0,min:8,cost:0,retail:0,portion:'1 per pizza',closing:null},
+  {id:12,name:'Wrap',cat:'Bread & Dough',unit:'Each',qty:0,min:8,cost:0,retail:0,portion:'1 per wrap',closing:null},
+  {id:13,name:'Chips / Fries',cat:'Frozen',unit:'Kilo gram',qty:0,min:5,cost:0,retail:0,portion:'200g per side',closing:null},
+  {id:14,name:'Mozzarella',cat:'Cheese',unit:'Kilo gram',qty:0,min:1,cost:0,retail:0,portion:'100g per pizza',closing:null},
+  {id:15,name:'Pizza Sauce',cat:'Sauces',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'50ml per pizza',closing:null},
+  {id:16,name:'Mushroom Sauce',cat:'Sauces',unit:'Liter',qty:0,min:0.5,cost:0,retail:0,portion:'80ml per dish',closing:null},
+  {id:17,name:'Pepper Sauce',cat:'Sauces',unit:'Liter',qty:0,min:0.5,cost:0,retail:0,portion:'80ml per dish',closing:null},
+  {id:18,name:'Peri Peri Sauce',cat:'Sauces',unit:'Liter',qty:0,min:0.5,cost:0,retail:0,portion:'50ml per dish',closing:null},
+  {id:19,name:'Eggs',cat:'Dairy',unit:'Each',qty:0,min:12,cost:0,retail:0,portion:'2 per bun',closing:null},
+  {id:20,name:'Mushrooms',cat:'Vegetables',unit:'Kilo gram',qty:0,min:0.5,cost:0,retail:0,portion:'50g per dish',closing:null},
+]);
+
+const persist=()=>{
+  save('hitw_pw',passwords);save('hitw_staff',staffList);save('hitw_regulars',regulars);
+  save('hitw_cashups',cashups);save('hitw_tips',tipsData);save('hitw_recon',reconData);
+  save('hitw_orders',orders);save('hitw_menu',menuItems);save('hitw_barstock',barStock);
+  save('hitw_kstock',kitchenStock);save('hitw_promo',promoLog);save('hitw_unpaid',unpaidTables);
+  save('hitw_waitertips',waiterTipsLog);
+};
+
+// ============ LOGIN ============
+function selectRole(r){S.role=r;['admin','barman','waiter','kitchen'].forEach(x=>document.getElementById('role-'+x)?.classList.toggle('active',x===r));}
+function doLogin(){
+  const u=document.getElementById('login-user').value.trim().toLowerCase();
+  const p=document.getElementById('login-pass').value;
+  let ok=false;S.waiterName=null;S.barmanName=null;
+  if(S.role==='admin'&&p===passwords.admin)ok=true;
+  else if(S.role==='kitchen'&&p===passwords.kitchen)ok=true;
+  else if(S.role==='barman'&&p===passwords.barman){ok=true;} // show person picker after
+  else if(S.role==='waiter'){
+    const wm={tanya:'Tanya',kim:'Kim',marcus:'Marcus',chris:'Chris',k:'K'};
+    const wk=Object.keys(wm).find(k=>u===k&&p===passwords[k]);
+    if(wk){ok=true;S.waiterName=wm[wk];}
+    else if(p===passwords.waiter){ok=true;} // show picker after
+  }
+  if(!ok){document.getElementById('login-err').textContent='Incorrect password.';return;}
+  // Show person picker for barman and waiter (shared login)
+  if(S.role==='barman'){showBarmanPicker();return;}
+  if(S.role==='waiter'&&!S.waiterName){showWaiterPicker();return;}
+  launchApp();
+}
+function showBarmanPicker(){
+  document.getElementById('login-role-step').innerHTML=`
+    <div style="margin-bottom:14px">
+      <div style="font-size:0.85rem;color:var(--muted);margin-bottom:14px">Who is working the bar today?</div>
+      <div style="display:flex;gap:10px;justify-content:center">
+        ${staffList.bartenders.map(name=>`
+          <div onclick="selectBarman('${name}')" style="background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:22px 28px;cursor:pointer;text-align:center;transition:all .2s;flex:1"
+            onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:2rem;margin-bottom:6px">🍺</div>
+            <div style="font-weight:700;font-size:1rem">${name}</div>
+            <div style="font-size:0.72rem;color:var(--muted);margin-top:3px">Bartender</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <button class="btn-sm" onclick="location.reload()" style="width:100%;margin-top:8px">← Back</button>`;
+}
+function selectBarman(name){
+  S.barmanName=name;launchApp();
+}
+function showWaiterPicker(){
+  document.getElementById('login-role-step').innerHTML=`
+    <div style="margin-bottom:14px">
+      <div style="font-size:0.85rem;color:var(--muted);margin-bottom:14px">Which waiter are you?</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        ${staffList.waiters.map(name=>`
+          <div onclick="selectWaiter('${name}')" style="background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:16px 10px;cursor:pointer;text-align:center;transition:all .2s"
+            onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:1.6rem;margin-bottom:5px">🍽️</div>
+            <div style="font-weight:700;font-size:0.88rem">${name}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <button class="btn-sm" onclick="location.reload()" style="width:100%;margin-top:8px">← Back</button>`;
+}
+function selectWaiter(name){
+  S.waiterName=name;launchApp();
+}
+function launchApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  let lbl='';
+  if(S.role==='barman')lbl=`${S.barmanName||'Barman'} (Bar)`;
+  else if(S.role==='waiter')lbl=`${S.waiterName||'Waiter'} (Waiter)`;
+  else lbl=S.role.charAt(0).toUpperCase()+S.role.slice(1);
+  document.getElementById('topbar-user').textContent=`Logged in as: ${lbl}`;
+  document.getElementById('today-date').textContent=new Date().toLocaleDateString('en-ZA',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
+  buildNav();initDates();renderAll();
+}
+function doLogout(){
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-pass').value='';document.getElementById('login-user').value='';
+  document.getElementById('login-err').textContent='';S.waiterName=null;
+}
+
+// ============ NAV ============
+const navConfig={
+  admin:[
+    {id:'dashboard',label:'📊 Dashboard'},{id:'promo',label:'🎭 Promo / Comp'},
+    {id:'mgmt',label:'📑 Mgmt Report'},{id:'cashup',label:'💵 Cash-Up'},
+    {id:'tips',label:'💝 Tips & Pay'},{id:'recon',label:'🏦 Bank Recon'},
+    {id:'orders',label:'🍽️ Orders'},{id:'bar',label:'🍺 Bar View'},
+    {id:'kitchen',label:'👨‍🍳 Kitchen View'},{id:'menu',label:'📋 Menu'},
+    {id:'stock',label:'📦 Bar Stock'},{id:'kitchen-stock',label:'🥩 Kitchen Stock'},
+    {id:'reports',label:'📈 Reports'},{id:'settings',label:'⚙️ Settings'},
+  ],
+  barman:[{id:'bar',label:'🍺 Bar View'},{id:'stock',label:'📦 Bar Stock'}],
+  waiter:[{id:'orders',label:'🍽️ Place Order'},{id:'waiter-tips',label:'💝 My Tips'}],
+  kitchen:[{id:'kitchen',label:'👨‍🍳 Kitchen View'},{id:'kitchen-stock',label:'🥩 Kitchen Stock'}],
+};
+function buildNav(){
+  const nav=document.getElementById('main-nav');nav.innerHTML='';
+  (navConfig[S.role]||[]).forEach((item,i)=>{
+    const el=document.createElement('div');
+    el.className='nav-item'+(i===0?' active':'');
+    el.textContent=item.label;el.dataset.page=item.id;
+    el.onclick=()=>showPage(item.id);nav.appendChild(el);
+  });
+  showPage((navConfig[S.role]||[{id:'dashboard'}])[0].id);
+}
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const pg=document.getElementById('page-'+id);if(pg)pg.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{if(n.dataset.page===id)n.classList.add('active');});
+  if(id==='bar')renderBarOrders();
+  if(id==='kitchen')renderKitchenOrders();
+  if(id==='orders'){renderRegularsGrid();renderTableGrid();renderActiveOrders();buildWaiterSelect();}
+  if(id==='menu')renderMenuList();
+  if(id==='stock'){renderBarStock();applyRoleStockView();document.getElementById('st-date-label')&&(document.getElementById('st-date-label').textContent=todayStr());}
+  if(id==='kitchen-stock'){renderKitchenStock();applyRoleKitchenView();}
+  if(id==='dashboard')renderDashboard();
+  if(id==='reports')renderReports();
+  if(id==='tips')renderTipsRows();
+  if(id==='settings'){loadSettings();renderRegularsSettings();}
+  if(id==='waiter-tips')initWaiterTips();
+  if(id==='mgmt'){document.getElementById('mgmt-from').value=todayStr();document.getElementById('mgmt-to').value=todayStr();}
+  if(id==='promo')renderPromoPage();
+}
+
+// ============ ROLE-BASED STOCK VIEW ============
+function applyRoleStockView(){
+  const addSec=document.getElementById('bar-add-section');
+  if(addSec)addSec.style.display=S.role==='admin'?'block':'none';
+}
+function applyRoleKitchenView(){
+  const addSec=document.getElementById('kitchen-add-section');
+  if(addSec)addSec.style.display=S.role==='admin'?'block':'none';
+}
+
+// ============ UTILS ============
+const fmt=v=>'R '+parseFloat(v||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+const todayStr=()=>new Date().toLocaleDateString('en-ZA');
+function initDates(){const t=todayStr();['cu-date','tp-date','rc-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=t;});}
+function showMsg(id,txt,ok=true){
+  const el=document.getElementById(id);if(!el)return;
+  el.innerHTML=`<div class="alert ${ok?'alert-success':'alert-error'}">${txt}</div>`;
+  setTimeout(()=>el.innerHTML='',3500);
+}
+
+// ============ PROMO / COMP ============
+function renderPromoPage(){
+  // People grid
+  const promoP=regulars.filter(r=>r.type==='promo'||r.type==='management');
+  document.getElementById('promo-people-grid').innerHTML=promoP.map(r=>`
+    <div class="promo-tile">
+      <div class="pname">${r.name}</div>
+      <div class="ptag">${r.type==='management'?'🏷️ Management':'🎭 Promo'}</div>
+    </div>`).join('');
+  // Person select
+  document.getElementById('promo-person').innerHTML=
+    [...promoP.map(r=>`<option value="${r.name}">${r.name}</option>`),
+     '<option value="General">General</option>',
+     '<option value="Breakage">Breakage</option>',
+     '<option value="Wastage">Wastage</option>'].join('');
+  renderPromoLog();
+  renderUnpaidTables();
+}
+function savePromoEntry(){
+  const person=document.getElementById('promo-person').value;
+  const type=document.getElementById('promo-type').value;
+  const desc=document.getElementById('promo-desc').value.trim();
+  const qty=parseFloat(document.getElementById('promo-qty').value)||1;
+  const cost=parseFloat(document.getElementById('promo-cost').value)||0;
+  const retail=parseFloat(document.getElementById('promo-retail').value)||0;
+  const table=document.getElementById('promo-table').value.trim();
+  const notes=document.getElementById('promo-notes').value.trim();
+  if(!desc){showMsg('promo-msg','Enter a description',false);return;}
+  promoLog.unshift({id:Date.now(),date:todayStr(),time:new Date().toLocaleTimeString('en-ZA'),person,type,desc,qty,cost:cost*qty,retail:retail*qty,table,notes});
+  persist();renderPromoLog();renderUnpaidTables();
+  showMsg('promo-msg','✅ Entry logged!');
+  ['promo-desc','promo-qty','promo-cost','promo-retail','promo-table','promo-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}
+function renderPromoLog(){
+  const t=todayStr();
+  const today=promoLog.filter(p=>p.date===t);
+  const totCost=today.reduce((a,p)=>a+p.cost,0);
+  const totRetail=today.reduce((a,p)=>a+p.retail,0);
+  document.getElementById('promo-total-cost').textContent=fmt(totCost);
+  document.getElementById('promo-total-retail').textContent=fmt(totRetail);
+  const typeLabels={comp:'🎁 Comp',shot:'🥃 Free Shot',breakage:'💥 Breakage',wastage:'🗑️ Wastage',keg:'🍺 Keg',unpaid:'💸 Unpaid'};
+  document.getElementById('promo-log-table').innerHTML=promoLog.slice(0,30).map(p=>`
+    <tr>
+      <td style="font-size:0.77rem">${p.date}</td>
+      <td><strong>${p.person}</strong></td>
+      <td><span class="badge badge-purple">${typeLabels[p.type]||p.type}</span></td>
+      <td style="font-size:0.77rem">${p.desc}${p.table?' (T'+p.table+')':''}</td>
+      <td style="color:var(--red)">${fmt(p.cost)}</td>
+      <td style="color:var(--purple)">${fmt(p.retail)}</td>
+      <td><button class="btn-sm btn-danger" onclick="deletePromo(${p.id})" style="padding:2px 6px">✕</button></td>
+    </tr>`).join('')||'<tr><td colspan="7" class="empty-state">No entries</td></tr>';
+}
+function deletePromo(id){promoLog=promoLog.filter(p=>p.id!==id);persist();renderPromoLog();}
+function renderUnpaidTables(){
+  document.getElementById('unpaid-tables-list').innerHTML=unpaidTables.length?
+    unpaidTables.map(u=>`
+      <div class="order-card">
+        <div class="order-header">
+          <div><strong>Table ${u.table}</strong> <span class="badge badge-red">Unpaid</span></div>
+          <span style="font-size:0.74rem;color:var(--muted)">${u.date} ${u.time}</span>
+        </div>
+        <div style="font-size:0.8rem;margin-bottom:6px">${(u.items||[]).map(i=>`${i.qty}x ${i.name}`).join(', ')}</div>
+        <div style="font-weight:700;color:var(--red);margin-bottom:8px">Amount Owed: ${fmt(u.total)}</div>
+        ${u.notes?`<div style="font-size:0.77rem;color:var(--muted);margin-bottom:6px">Note: ${u.notes}</div>`:''}
+        <div style="display:flex;gap:5px">
+          <button class="btn-sm btn-success" onclick="resolveUnpaid(${u.id},'paid')" style="flex:1">✅ Paid</button>
+          <button class="btn-sm btn-danger" onclick="resolveUnpaid(${u.id},'writeoff')" style="flex:1">🗑️ Write Off</button>
+        </div>
+      </div>`).join(''):'<div class="empty-state">No unpaid tables — all good!</div>';
+}
+function resolveUnpaid(id,action){
+  if(action==='writeoff'&&!confirm('Write this off as a loss?'))return;
+  unpaidTables=unpaidTables.filter(u=>u.id!==id);
+  persist();renderUnpaidTables();renderDashboard();
+}
+
+// ============ DASHBOARD ============
+function renderDashboard(){
+  const t=todayStr();
+  const cu=cashups.find(c=>c.date===t)||{};
+  document.getElementById('ds-total').textContent=fmt(cu.subtotal||0);
+  document.getElementById('ds-excvat').textContent=fmt(cu.exclVat||0);
+  document.getElementById('ds-vat').textContent=fmt(cu.vat||0);
+  document.getElementById('ds-cash').textContent=fmt(cu.cash||0);
+  document.getElementById('ds-card').textContent=fmt(cu.card||0);
+  document.getElementById('ds-tips').textContent=fmt(cu.tips||0);
+  const todayPromo=promoLog.filter(p=>p.date===t);
+  document.getElementById('ds-promo').textContent=fmt(todayPromo.reduce((a,p)=>a+p.retail,0));
+  document.getElementById('ds-unpaid').textContent=unpaidTables.length;
+  const cats=[['Alcohol',cu.alcohol],['Beverages',cu.bev],['Wine',cu.wine],['Food',cu.food]];
+  document.getElementById('dash-sales-table').innerHTML=cats.map(([l,v])=>`<tr><td>${l}</td><td>${fmt(v||0)}</td><td style="color:var(--muted)">${fmt((v||0)*(15/115))}</td><td>${fmt((v||0)*(100/115))}</td></tr>`).join('');
+  let alerts=[];
+  [...barStock,...kitchenStock].forEach(s=>{if(parseFloat(s.qty)<=parseFloat(s.min))alerts.push(`<div class="alert alert-error">⚠️ Low stock: <b>${s.name}</b> — ${s.qty} ${s.unit}</div>`);});
+  if(unpaidTables.length)alerts.push(`<div class="alert alert-error">💸 ${unpaidTables.length} unpaid table(s) need attention</div>`);
+  const pending=orders.filter(o=>o.date===t&&o.status!=='done');
+  if(pending.length)alerts.push(`<div class="alert alert-info">📋 ${pending.length} pending order(s)</div>`);
+  document.getElementById('dash-alerts').innerHTML=alerts.length?alerts.join(''):'<div class="empty-state">All good!</div>';
+}
+
+// ============ MANAGEMENT REPORT ============
+function renderMgmt(){
+  const from=document.getElementById('mgmt-from').value;
+  const to=document.getElementById('mgmt-to').value;
+  const filtered=cashups.filter(c=>c.date>=from&&c.date<=to);
+  if(!filtered.length){document.getElementById('mgmt-output').innerHTML='<div class="empty-state">No cash-up data for this period. Save a cash-up first.</div>';return;}
+
+  // Totals
+  let tot={alcohol:0,bev:0,wine:0,food:0,exp:0,subtotal:0,vat:0,exclVat:0,cash:0,card:0,tips:0,total:0};
+  filtered.forEach(c=>Object.keys(tot).forEach(k=>tot[k]+=(parseFloat(c[k])||0)));
+
+  // Promo
+  const promoF=promoLog.filter(p=>p.date>=from&&p.date<=to);
+  const promoByPerson={};
+  promoF.forEach(p=>{if(!promoByPerson[p.person])promoByPerson[p.person]={retail:0,cost:0};promoByPerson[p.person].retail+=p.retail;promoByPerson[p.person].cost+=p.cost;});
+  const totalPromoRetail=promoF.reduce((a,p)=>a+p.retail,0);
+  const totalPromoCost=promoF.reduce((a,p)=>a+p.cost,0);
+  const promoBreakageWastage=promoF.filter(p=>['breakage','wastage','keg'].includes(p.type)).reduce((a,p)=>a+p.retail,0);
+
+  // Unpaid
+  const unpaidF=unpaidTables.filter(u=>u.date>=from&&u.date<=to);
+  const totalUnpaid=unpaidF.reduce((a,u)=>a+u.total,0);
+
+  // Tips & staff
+  const tipsF=tipsData.filter(t=>t.date>=from&&t.date<=to);
+  const staffTots={};
+  tipsF.forEach(day=>Object.entries(day.entries||{}).forEach(([n,v])=>{if(!staffTots[n])staffTots[n]={tips:0,shift:0,role:'Staff'};staffTots[n].tips+=v.tips||0;staffTots[n].shift+=v.shift||0;}));
+  staffList.waiters.forEach(n=>{if(!staffTots[n])staffTots[n]={tips:0,shift:0,role:'Waiter'};else staffTots[n].role='Waiter';});
+  staffList.bartenders.forEach(n=>{if(!staffTots[n])staffTots[n]={tips:0,shift:0,role:'Bar Staff'};else staffTots[n].role='Bar Staff';});
+  const totalTipsStaff=Object.values(staffTots).reduce((a,v)=>a+v.tips,0);
+  const totalShiftPay=Object.values(staffTots).reduce((a,v)=>a+v.shift,0);
+
+  // Orders stats
+  const periodOrders=orders.filter(o=>o.date>=from&&o.date<=to);
+  const totalInvoices=periodOrders.length;
+  const totalTables=[...new Set(periodOrders.map(o=>o.table))].length;
+  const doneOrders=periodOrders.filter(o=>o.status==='done');
+  const totalDiscounts=doneOrders.reduce((a,o)=>a+(o.discountAmt||0),0);
+  const discountCount=doneOrders.filter(o=>o.discount>0).length;
+
+  // Payment types breakdown (from cashups)
+  const nonBanking=totalPromoRetail; // promo/comp treated as non-banking
+  const totalPaytypes=tot.cash+tot.card+tot.tips+nonBanking;
+  const turnoverIncl=tot.subtotal;
+  const turnoverExcl=tot.exclVat;
+
+  // Gross profit estimate (if cost data available)
+  const costOfSales=barStock.reduce((a,s)=>a+(((s.qty||0)-(s.closing||s.qty||0))*(s.cost||0)),0)+
+                    kitchenStock.reduce((a,s)=>a+(((s.qty||0)-(s.closing||s.qty||0))*(s.cost||0)),0);
+  const grossProfit=turnoverExcl-costOfSales;
+  const gpPct=turnoverExcl>0?((grossProfit/turnoverExcl)*100).toFixed(2):0;
+
+  const now=new Date().toLocaleString('en-ZA');
+  const days=filtered.length;
+
+  document.getElementById('mgmt-output').innerHTML=`
+  <div class="card" id="mgmt-print-area">
+    <!-- HEADER -->
+    <div style="font-family:monospace;font-size:0.82rem;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+      <div style="font-size:1rem;font-weight:700;color:var(--accent);margin-bottom:4px">📑 Management Overview Report</div>
+      <div style="color:var(--muted)">HOLE IN THE WALL</div>
+      <div style="color:var(--muted)">Report Dates: ${from} → ${to} &nbsp;|&nbsp; Generated: ${now}</div>
+      <div style="color:var(--muted)">Period: ${days} day(s)</div>
+    </div>
+
+    <!-- PAYTYPES + TURNOVER -->
+    <div class="grid2" style="gap:16px;margin-bottom:14px">
+      <div>
+        <div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px">💳 Payment Types</div>
+        <table>
+          <tbody>
+            <tr><td>Cash</td><td style="text-align:right;font-weight:600">${fmt(tot.cash)}</td></tr>
+            <tr><td>Credit Card</td><td style="text-align:right;font-weight:600">${fmt(tot.card)}</td></tr>
+            <tr><td style="color:var(--purple)">Josh – Mang Acc</td><td style="text-align:right;color:var(--purple)">${fmt((promoByPerson['Joshua']?.retail||0))}</td></tr>
+            <tr><td style="color:var(--purple)">Promo Account</td><td style="text-align:right;color:var(--purple)">${fmt(totalPromoRetail)}</td></tr>
+            <tr><td style="color:var(--purple)">Ty – Mang Account</td><td style="text-align:right;color:var(--purple)">${fmt((promoByPerson['Ty']?.retail||0))}</td></tr>
+            <tr><td style="color:var(--purple)">Amanda – Mang Acc</td><td style="text-align:right;color:var(--purple)">${fmt((promoByPerson['Amanda']?.retail||0))}</td></tr>
+            <tr><td style="color:var(--purple)">Megan – Mang Acc</td><td style="text-align:right;color:var(--purple)">${fmt((promoByPerson['Megan']?.retail||0))}</td></tr>
+            <tr><td style="color:var(--purple)">Wesley – Mang Acc</td><td style="text-align:right;color:var(--purple)">${fmt((promoByPerson['Wesley']?.retail||0))}</td></tr>
+            <tr><td style="color:var(--red)">Waste &amp; Return</td><td style="text-align:right;color:var(--red)">${fmt(promoBreakageWastage)}</td></tr>
+            <tr><td style="color:var(--red)">Unpaid Tables</td><td style="text-align:right;color:var(--red)">${fmt(totalUnpaid)}</td></tr>
+            <tr style="border-top:2px solid var(--border)"><td style="font-weight:700">Total Paytypes</td><td style="text-align:right;font-weight:700">${fmt(totalPaytypes)}</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px">
+          <table>
+            <tbody>
+              <tr><td style="color:var(--muted)">Less : Tips</td><td style="text-align:right;color:var(--muted)">${fmt(tot.tips)}</td></tr>
+              <tr><td style="color:var(--muted)">Less : Service Charge</td><td style="text-align:right;color:var(--muted)">R 0.00</td></tr>
+              <tr style="border-top:1px solid var(--border)"><td style="font-weight:700">Total Paytypes (net)</td><td style="text-align:right;font-weight:700">${fmt(totalPaytypes-tot.tips)}</td></tr>
+              <tr><td style="color:var(--muted)">Less Non-Banking Paytypes</td><td style="text-align:right;color:var(--muted)">${fmt(nonBanking)}</td></tr>
+              <tr style="border-top:2px solid var(--border)"><td style="font-weight:700;color:var(--accent)">Turnover (Incl. VAT)</td><td style="text-align:right;font-weight:700;color:var(--accent)">${fmt(turnoverIncl)}</td></tr>
+              <tr><td style="color:var(--muted)">Less : VAT (15%)</td><td style="text-align:right;color:var(--muted)">${fmt(tot.vat)}</td></tr>
+              <tr style="border-top:2px solid var(--border)"><td style="font-weight:700;color:var(--green)">Turnover (Excl. VAT)</td><td style="text-align:right;font-weight:700;color:var(--green)">${fmt(turnoverExcl)}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- RIGHT: SALES + PROFIT -->
+      <div>
+        <div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px">📊 Sales & Profitability</div>
+        <table>
+          <tbody>
+            <tr><td style="color:var(--muted)">Menu Item Sales (Incl. VAT)</td><td style="text-align:right">${fmt(tot.subtotal)}</td></tr>
+            <tr><td style="color:var(--muted)">Less: Non-Banking / Promo</td><td style="text-align:right;color:var(--red)">-${fmt(nonBanking)}</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="font-weight:600">Actual Sales (Incl. VAT)</td><td style="text-align:right;font-weight:600">${fmt(turnoverIncl)}</td></tr>
+            <tr><td style="color:var(--muted)">Less: VAT</td><td style="text-align:right;color:var(--muted)">-${fmt(tot.vat)}</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="font-weight:600">Actual Sales (Excl. VAT)</td><td style="text-align:right;font-weight:600">${fmt(turnoverExcl)}</td></tr>
+            ${costOfSales>0?`<tr><td style="color:var(--muted)">Less: Cost of Sales</td><td style="text-align:right;color:var(--red)">-${fmt(costOfSales)}</td></tr>
+            <tr style="border-top:2px solid var(--border)"><td style="font-weight:700;color:var(--green)">Gross Profit</td><td style="text-align:right;font-weight:700;color:var(--green)">${fmt(grossProfit)} (${gpPct}%)</td></tr>`:''}
+            <tr><td style="color:var(--muted)">Less: Expenses</td><td style="text-align:right;color:var(--red)">-${fmt(tot.exp)}</td></tr>
+            <tr style="border-top:2px solid var(--border)"><td style="font-weight:700;color:var(--accent)">Nett Profit</td><td style="text-align:right;font-weight:700;color:var(--accent)">${fmt(turnoverExcl - tot.exp - costOfSales)}</td></tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top:14px">
+          <div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px">📋 Sales Exceptions</div>
+          <table>
+            <tbody>
+              <tr><td>Discounts</td><td style="text-align:right">${discountCount}</td><td style="text-align:right;color:var(--red)">-${fmt(totalDiscounts)}</td></tr>
+              <tr><td style="color:var(--purple)">Promo / Comp</td><td style="text-align:right">${promoF.length}</td><td style="text-align:right;color:var(--purple)">${fmt(totalPromoRetail)}</td></tr>
+              <tr><td style="color:var(--red)">Waste &amp; Breakage</td><td style="text-align:right">${promoF.filter(p=>['breakage','wastage','keg'].includes(p.type)).length}</td><td style="text-align:right;color:var(--red)">${fmt(promoBreakageWastage)}</td></tr>
+              <tr><td style="color:var(--red)">Unpaid Tables</td><td style="text-align:right">${unpaidF.length}</td><td style="text-align:right;color:var(--red)">${fmt(totalUnpaid)}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SALES BREAKDOWN -->
+    <div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px">🍽️ Sales Breakdown by Category</div>
+    <table style="margin-bottom:14px">
+      <thead><tr><th>Category</th><th style="text-align:right">Incl. VAT</th><th style="text-align:right">VAT (15%)</th><th style="text-align:right">Excl. VAT</th><th style="text-align:right">% of Sales</th></tr></thead>
+      <tbody>
+        ${[['Alcohol',tot.alcohol],['Beverages',tot.bev],['Wine',tot.wine],['Food',tot.food]].map(([l,v])=>`
+          <tr><td>${l}</td><td style="text-align:right">${fmt(v)}</td><td style="text-align:right;color:var(--muted)">${fmt(v*(15/115))}</td><td style="text-align:right">${fmt(v*(100/115))}</td><td style="text-align:right;color:var(--muted)">${tot.subtotal>0?((v/tot.subtotal)*100).toFixed(1)+'%':'—'}</td></tr>`).join('')}
+        <tr style="border-top:2px solid var(--border)"><td style="font-weight:700">TOTALS</td><td style="text-align:right;font-weight:700">${fmt(tot.subtotal)}</td><td style="text-align:right;color:var(--muted)">${fmt(tot.vat)}</td><td style="text-align:right;font-weight:700">${fmt(turnoverExcl)}</td><td style="text-align:right">100%</td></tr>
+      </tbody>
+    </table>
+
+    <!-- STAFF -->
+    <div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px">👤 Staff — Tips & Shift Pay</div>
+    <table style="margin-bottom:14px">
+      <thead><tr><th>Staff Member</th><th>Role</th><th style="text-align:right">Tips</th><th style="text-align:right">Shift Pay</th><th style="text-align:right">Total Earnings</th></tr></thead>
+      <tbody>
+        ${Object.entries(staffTots).map(([n,v])=>`<tr><td>${n}</td><td><span class="badge badge-blue">${v.role}</span></td><td style="text-align:right;color:var(--green)">${fmt(v.tips)}</td><td style="text-align:right">${fmt(v.shift)}</td><td style="text-align:right;font-weight:700">${fmt(v.tips+v.shift)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty-state">No tips data for this period</td></tr>'}
+        <tr style="border-top:2px solid var(--border)"><td colspan="2" style="font-weight:700">TOTALS</td><td style="text-align:right;color:var(--green);font-weight:700">${fmt(totalTipsStaff)}</td><td style="text-align:right;font-weight:700">${fmt(totalShiftPay)}</td><td style="text-align:right;font-weight:700;color:var(--accent)">${fmt(totalTipsStaff+totalShiftPay)}</td></tr>
+      </tbody>
+    </table>
+
+    <!-- CUSTOMER ACTIVITY -->
+    <div class="grid2" style="gap:16px;margin-bottom:14px">
+      <div>
+        <div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px">🪑 Customer Activity</div>
+        <table>
+          <tbody>
+            <tr><td>Total Orders / Invoices</td><td style="text-align:right;font-weight:600">${totalInvoices}</td></tr>
+            <tr><td>Tables Used</td><td style="text-align:right">${totalTables}</td></tr>
+            <tr><td>Days in Period</td><td style="text-align:right">${days}</td></tr>
+            <tr><td style="color:var(--muted)">Avg Orders per Day</td><td style="text-align:right;color:var(--muted)">${days>0?(totalInvoices/days).toFixed(1):0}</td></tr>
+            <tr><td style="color:var(--muted)">Avg Sale per Order</td><td style="text-align:right;color:var(--muted)">${fmt(totalInvoices>0?turnoverIncl/totalInvoices:0)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px">📅 Daily Turnover Summary</div>
+        <table>
+          <thead><tr><th>Date</th><th style="text-align:right">Incl.VAT</th><th style="text-align:right">Excl.VAT</th><th style="text-align:right">Cash</th><th style="text-align:right">Card</th></tr></thead>
+          <tbody>
+            ${filtered.map(c=>`<tr><td>${c.date}</td><td style="text-align:right;font-weight:600">${fmt(c.subtotal)}</td><td style="text-align:right">${fmt(c.exclVat)}</td><td style="text-align:right">${fmt(c.cash)}</td><td style="text-align:right">${fmt(c.card)}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="no-print" style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn-sm btn-accent" onclick="window.print()" style="flex:1">🖨️ Print / Export Report</button>
+    </div>
+  </div>`;
+}
+
+// ============ CASH-UP ============
+function calcCashup(){
+  const g=id=>parseFloat(document.getElementById(id).value)||0;
+  const alcohol=g('cu-alcohol'),bev=g('cu-bev'),wine=g('cu-wine'),food=g('cu-food'),exp=g('cu-exp');
+  const subtotal=alcohol+bev+wine+food;const vat=subtotal*(15/115);const exclVat=subtotal-vat;
+  const cash=g('cu-cash'),card=g('cu-card'),tips=g('cu-tips');const total=subtotal-exp;
+  const variance=(cash+card)-total;
+  document.getElementById('cat-vat-table').innerHTML=[['Alcohol',alcohol],['Beverages',bev],['Wine',wine],['Food',food]].map(([l,v])=>`<tr><td>${l}</td><td style="text-align:right">${fmt(v)}</td><td style="text-align:right;color:var(--muted)">${fmt(v*(15/115))}</td><td style="text-align:right">${fmt(v*(100/115))}</td></tr>`).join('');
+  ['r-incvat','r-vat','r-excvat','r-exp','r-cash','r-card','r-tips','r-total'].forEach((id,i)=>{
+    const vals=[subtotal,vat,exclVat,exp,cash,card,tips,total];
+    document.getElementById(id).textContent=fmt(vals[i]);
+  });
+  const vEl=document.getElementById('r-variance');
+  if(Math.abs(variance)<0.01)vEl.innerHTML='<span style="color:var(--green)">✓ Balanced</span>';
+  else vEl.innerHTML=`<span style="color:var(--red)">⚠ Variance: ${fmt(variance)} ${variance>0?'(over)':'(short)'}</span>`;
+  return{alcohol,bev,wine,food,exp,subtotal,vat,exclVat,cash,card,tips,total};
+}
+function saveCashup(){
+  const d=document.getElementById('cu-date').value||todayStr();
+  const v=calcCashup();
+  const idx=cashups.findIndex(c=>c.date===d);
+  if(idx>=0)cashups[idx]={date:d,...v};else cashups.unshift({date:d,...v});
+  persist();renderCashupHistory();showMsg('cu-msg','✅ Cash-up saved!');
+}
+function renderCashupHistory(){
+  document.getElementById('cashup-history').innerHTML=cashups.slice(0,30).map(c=>`
+    <tr><td>${c.date}</td><td style="font-weight:600">${fmt(c.subtotal)}</td><td style="color:var(--muted)">${fmt(c.vat)}</td><td>${fmt(c.exclVat)}</td><td>${fmt(c.cash)}</td><td>${fmt(c.card)}</td><td style="color:var(--green)">${fmt(c.tips)}</td><td style="color:var(--accent);font-weight:700">${fmt(c.total)}</td>
+    <td><button class="btn-sm" onclick="loadCashup('${c.date}')">Load</button></td></tr>`).join('')||'<tr><td colspan="9" class="empty-state">No records</td></tr>';
+}
+function loadCashup(d){
+  const c=cashups.find(x=>x.date===d);if(!c)return;
+  ['alcohol','bev','wine','food','exp','cash','card','tips'].forEach(k=>{const el=document.getElementById('cu-'+k);if(el)el.value=c[k]||'';});
+  document.getElementById('cu-date').value=d;calcCashup();
+}
+
+// ============ TIPS (Admin) ============
+function renderTipsRows(){
+  const mkRow=n=>`<div class="stock-row"><span style="font-weight:600;min-width:65px">${n}</span><div style="display:flex;gap:6px;flex:1">
+    <div style="flex:1"><label style="font-size:0.68rem">Tips (R)</label><input type="number" id="tip-${n}" placeholder="0" oninput="renderTipsSummary()" /></div>
+    <div style="flex:1"><label style="font-size:0.68rem">Shift Pay (R)</label><input type="number" id="shift-${n}" placeholder="0" oninput="renderTipsSummary()" /></div>
+  </div></div>`;
+  document.getElementById('waiter-tip-rows').innerHTML=staffList.waiters.map(mkRow).join('');
+  document.getElementById('barman-tip-rows').innerHTML=staffList.bartenders.map(mkRow).join('');
+  renderTipsSummary();
+}
+function renderTipsSummary(){
+  const all=[...staffList.waiters.map(n=>({n,role:'Waiter'})),...staffList.bartenders.map(n=>({n,role:'Bartender'}))];
+  let rows='',totT=0,totS=0;
+  all.forEach(({n,role})=>{
+    const t=parseFloat(document.getElementById('tip-'+n)?.value)||0;
+    const s=parseFloat(document.getElementById('shift-'+n)?.value)||0;
+    totT+=t;totS+=s;
+    rows+=`<tr><td>${n}</td><td><span class="badge badge-blue">${role}</span></td><td style="color:var(--green)">${fmt(t)}</td><td>${fmt(s)}</td><td style="font-weight:700">${fmt(t+s)}</td></tr>`;
+  });
+  rows+=`<tr style="border-top:2px solid var(--border)"><td colspan="2" style="font-weight:700">TOTALS</td><td style="color:var(--green);font-weight:700">${fmt(totT)}</td><td style="font-weight:700">${fmt(totS)}</td><td style="color:var(--accent);font-weight:700">${fmt(totT+totS)}</td></tr>`;
+  document.getElementById('tips-summary').innerHTML=rows;
+}
+function saveTips(){
+  const d=document.getElementById('tp-date').value||todayStr();
+  const all=[...staffList.waiters,...staffList.bartenders];
+  const entries={};
+  all.forEach(n=>{entries[n]={tips:parseFloat(document.getElementById('tip-'+n)?.value)||0,shift:parseFloat(document.getElementById('shift-'+n)?.value)||0};});
+  const totalTips=Object.values(entries).reduce((a,v)=>a+v.tips,0);
+  const totalShift=Object.values(entries).reduce((a,v)=>a+v.shift,0);
+  const idx=tipsData.findIndex(x=>x.date===d);
+  const rec={date:d,entries,totalTips,totalShift};
+  if(idx>=0)tipsData[idx]=rec;else tipsData.unshift(rec);
+  persist();renderTipsHistory();showMsg('tips-msg','✅ Saved!');
+}
+function renderTipsHistory(){
+  document.getElementById('tips-history').innerHTML=tipsData.slice(0,20).map(t=>`
+    <tr><td>${t.date}</td><td style="color:var(--green)">${fmt(t.totalTips)}</td><td>${fmt(t.totalShift)}</td>
+    <td><button class="btn-sm" onclick="loadTips('${t.date}')">Load</button></td></tr>`).join('')||
+    '<tr><td colspan="4" class="empty-state">No records</td></tr>';
+}
+function loadTips(d){
+  const rec=tipsData.find(x=>x.date===d);if(!rec)return;
+  document.getElementById('tp-date').value=d;
+  Object.entries(rec.entries).forEach(([n,v])=>{
+    const t=document.getElementById('tip-'+n);if(t)t.value=v.tips;
+    const s=document.getElementById('shift-'+n);if(s)s.value=v.shift;
+  });
+  renderTipsSummary();
+}
+
+// ============ WAITER TIPS VIEW ============
+function initWaiterTips(){
+  const name=S.waiterName||'Waiter';
+  document.getElementById('wt-name-label').textContent=name;
+  // Load shift pay from admin tips record
+  const tRec=tipsData.find(t=>t.date===todayStr());
+  const myShift=tRec?.entries?.[name]?.shift||0;
+  document.getElementById('wt-shift-pay').textContent=fmt(myShift);
+  // Pre-populate from today's orders for this waiter
+  const existing=waiterTipsLog.find(w=>w.waiter===name&&w.date===todayStr());
+  waiterTipEntries=existing?JSON.parse(JSON.stringify(existing.entries)):[];
+  // Add any new tables from today's orders
+  const myOrders=[...new Map(orders.filter(o=>o.date===todayStr()&&o.waiter===name).map(o=>[o.table,o])).values()];
+  myOrders.forEach(o=>{
+    if(!waiterTipEntries.find(e=>e.table===String(o.table))){
+      waiterTipEntries.push({table:String(o.table),orderTotal:o.total||0,paid:0});
+    }
+  });
+  renderWaiterTips();
+}
+function addTipEntry(){waiterTipEntries.push({table:'',orderTotal:0,paid:0});renderWaiterTips();}
+function renderWaiterTips(){
+  document.getElementById('wt-table-entries').innerHTML=waiterTipEntries.map((e,i)=>`
+    <div class="tip-entry-row">
+      <div class="form-row">
+        <div class="form-group"><label>Table / Customer</label><input type="text" value="${e.table}" placeholder="Table #" onchange="updateTipEntry(${i},'table',this.value)" /></div>
+        <div class="form-group"><label>Order Total (R)</label><input type="number" value="${e.orderTotal||''}" placeholder="0.00" onchange="updateTipEntry(${i},'orderTotal',this.value)" /></div>
+        <div class="form-group"><label>Customer Paid (R)</label><input type="number" value="${e.paid||''}" placeholder="0.00" oninput="updateTipEntry(${i},'paid',this.value)" /></div>
+        <div class="form-group"><label>Tip Earned</label><div style="font-weight:700;color:var(--green);font-size:1rem;padding:7px 0">${fmt(Math.max(0,(e.paid||0)-(e.orderTotal||0)))}</div></div>
+      </div>
+    </div>`).join('');
+  calcWaiterTips();
+}
+function updateTipEntry(i,field,val){
+  if(field==='orderTotal'||field==='paid')waiterTipEntries[i][field]=parseFloat(val)||0;
+  else waiterTipEntries[i][field]=val;
+  renderWaiterTips();
+}
+function calcWaiterTips(){
+  const total=waiterTipEntries.reduce((a,e)=>a+Math.max(0,(e.paid||0)-(e.orderTotal||0)),0);
+  const shiftText=document.getElementById('wt-shift-pay').textContent;
+  const shift=parseFloat(shiftText.replace(/[^0-9.]/g,''))||0;
+  document.getElementById('wt-total-tips').textContent=fmt(total);
+  document.getElementById('wt-total-earn').textContent=fmt(total+shift);
+  document.getElementById('wt-summary').innerHTML=waiterTipEntries.map(e=>`
+    <tr><td>${e.table||'–'}</td><td>${fmt(e.orderTotal)}</td><td>${fmt(e.paid)}</td>
+    <td style="color:var(--green);font-weight:700">${fmt(Math.max(0,(e.paid||0)-(e.orderTotal||0)))}</td></tr>`).join('')||
+    '<tr><td colspan="4" class="empty-state">No entries yet</td></tr>';
+  const name=S.waiterName||'Waiter';
+  const idx=waiterTipsLog.findIndex(w=>w.waiter===name&&w.date===todayStr());
+  const rec={waiter:name,date:todayStr(),entries:waiterTipEntries,totalTips:total};
+  if(idx>=0)waiterTipsLog[idx]=rec;else waiterTipsLog.unshift(rec);
+  persist();
+}
+
+// ============ BANK RECON ============
+function handleDrop(e){e.preventDefault();document.getElementById('upload-zone')?.classList.remove('drag');const file=e.dataTransfer.files[0];if(file)processBankFile(file);}
+function handleBankFile(e){const file=e.target.files[0];if(file)processBankFile(file);}
+function processBankFile(file){
+  const info=document.getElementById('bank-file-info');const txDiv=document.getElementById('bank-transactions');
+  info.style.display='block';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const text=e.target.result;bankTransactions=parseCSV(text);
+    if(bankTransactions.length>0){renderBankTransactions();txDiv.style.display='block';info.textContent=`✅ ${file.name} — ${bankTransactions.length} transactions`;}
+    else{txDiv.style.display='none';info.innerHTML=`<strong>📄 ${file.name}</strong> — PDF detected. Enter total manually below.`;document.getElementById('bank-autofill-label').textContent='(from PDF)';}
+  };reader.readAsText(file);
+}
+function parseCSV(text){
+  const lines=text.split('\n').filter(l=>l.trim());if(lines.length<2)return[];
+  const txs=[];
+  lines.forEach((line,i)=>{if(i===0)return;const cols=line.includes(';')?line.split(';'):line.split(',');
+    if(cols.length>=3){const date=cols[0]?.trim()||'';const desc=cols[1]?.trim()||'Transaction';const amtStr=(cols[cols.length-1]||'').replace(/[^0-9.\-]/g,'');const amt=parseFloat(amtStr)||0;if(date&&amt!==0)txs.push({date,desc,amount:amt});}});
+  return txs;
+}
+function renderBankTransactions(){
+  const credits=bankTransactions.filter(t=>t.amount>0);const debits=bankTransactions.filter(t=>t.amount<0);
+  const totC=credits.reduce((a,t)=>a+t.amount,0);const totD=Math.abs(debits.reduce((a,t)=>a+t.amount,0));
+  document.getElementById('bank-credits').textContent=fmt(totC);document.getElementById('bank-debits').textContent=fmt(totD);
+  document.getElementById('bank-tx-count').textContent=`${bankTransactions.length} transactions`;
+  document.getElementById('bank-tx-list').innerHTML=bankTransactions.slice(0,50).map(t=>`<div class="recon-tx-row"><span style="color:var(--muted);min-width:72px">${t.date}</span><span style="flex:1">${t.desc}</span><span style="${t.amount>0?'color:var(--green)':'color:var(--red)'};font-weight:600">${fmt(t.amount)}</span></div>`).join('');
+  const el=document.getElementById('rc-bank-total');if(el){el.value=totC.toFixed(2);document.getElementById('bank-autofill-label').textContent='(auto-filled)';}
+  calcRecon();
+}
+function calcRecon(){
+  const g=id=>parseFloat(document.getElementById(id)?.value)||0;
+  const exp=g('rc-expected'),act=g('rc-actual'),card=g('rc-card'),dep=g('rc-deposit'),bank=g('rc-bank-total');
+  const cashVar=act-exp;const cardVar=card-bank;
+  document.getElementById('rc-r-expected').textContent=fmt(exp);document.getElementById('rc-r-actual').textContent=fmt(act);
+  document.getElementById('rc-r-card').textContent=fmt(card);document.getElementById('rc-r-bank').textContent=fmt(bank);document.getElementById('rc-r-deposit').textContent=fmt(dep);
+  const cv=document.getElementById('rc-r-cashvar');cv.textContent=fmt(Math.abs(cashVar));cv.style.color=Math.abs(cashVar)<0.01?'var(--green)':cashVar>0?'var(--blue)':'var(--red)';
+  const cv2=document.getElementById('rc-r-cardvar');if(cv2){cv2.textContent=fmt(Math.abs(cardVar));cv2.style.color=Math.abs(cardVar)<0.01?'var(--green)':cardVar>0?'var(--blue)':'var(--red)';}
+  const mv=Math.abs(cashVar)+Math.abs(cardVar);
+  document.getElementById('rc-variance').textContent=fmt(mv);document.getElementById('rc-variance').style.color=mv<0.01?'var(--green)':mv<100?'var(--accent)':'var(--red)';
+  document.getElementById('rc-variance-label').textContent=mv<0.01?'✓ Fully Balanced':mv<100?'Minor Variance':'⚠ Check Required';
+  const ok=mv<0.01;const st=document.getElementById('rc-r-status');st.textContent=ok?'Balanced':'Variance';st.className='badge '+(ok?'badge-green':'badge-red');
+  return{exp,act,card,dep,bank,cashVar,cardVar};
+}
+function saveRecon(){
+  const d=document.getElementById('rc-date').value||todayStr();const v=calcRecon();const notes=document.getElementById('rc-notes').value;
+  const idx=reconData.findIndex(x=>x.date===d);const rec={date:d,...v,notes};
+  if(idx>=0)reconData[idx]=rec;else reconData.unshift(rec);
+  persist();renderReconHistory();showMsg('rc-msg','✅ Saved!');
+}
+function renderReconHistory(){
+  document.getElementById('recon-history').innerHTML=reconData.slice(0,20).map(r=>{
+    const ok=Math.abs(r.cashVar||0)<0.01;
+    return `<tr><td>${r.date}</td><td>${fmt(r.exp)}</td><td>${fmt(r.act)}</td><td style="${ok?'color:var(--green)':'color:var(--red)'}">${fmt(Math.abs(r.cashVar||0))}</td><td><span class="badge ${ok?'badge-green':'badge-red'}">${ok?'Balanced':'Variance'}</span></td></tr>`;
+  }).join('')||'<tr><td colspan="5" class="empty-state">No records</td></tr>';
+}
+
+// ============ ORDERS ============
+function renderRegularsGrid(){
+  document.getElementById('regulars-grid').innerHTML=regulars.map(r=>`
+    <div class="disc-btn ${S.currentCustomer?.id===r.id?'active':''}" onclick="selectCustomer(${r.id})">
+      <div class="disc-name">${r.name}</div>
+      <div class="disc-pct">${r.type==='management'?'🏷️ Tab':r.type==='promo'?'🎭 '+r.discount+'% promo':r.discount+'% off'}</div>
+    </div>`).join('');
+}
+function selectCustomer(id){
+  const reg=regulars.find(r=>r.id===id);
+  if(S.currentCustomer?.id===id){S.currentCustomer=null;S.currentDiscount=0;}
+  else{S.currentCustomer=reg;S.currentDiscount=reg.discount||0;}
+  renderRegularsGrid();updateDiscountDisplay();
+}
+function updateDiscountDisplay(){
+  const banner=document.getElementById('discount-banner');const sub=document.getElementById('order-subtotal-line');const disc=document.getElementById('order-discount-line');
+  if(!banner)return;
+  if(S.currentCustomer){
+    banner.style.display='block';
+    const typeLabel=S.currentCustomer.type==='management'?'🏷️ Management Tab':S.currentCustomer.type==='promo'?'🎭 Promo':' ⭐ Regular';
+    banner.innerHTML=`<div class="alert alert-info">${typeLabel}: <strong>${S.currentCustomer.name}</strong>${S.currentDiscount>0?' — '+S.currentDiscount+'% discount':''}</div>`;
+  }else{banner.style.display='none';}
+  const subtotal=currentOrderItems.reduce((a,i)=>a+i.price*i.qty,0);
+  const discAmt=subtotal*(S.currentDiscount/100);const total=subtotal-discAmt;
+  if(sub)sub.textContent=S.currentDiscount>0?`Subtotal: ${fmt(subtotal)}`:'';
+  if(disc)disc.textContent=S.currentDiscount>0?`Discount (${S.currentDiscount}%): -${fmt(discAmt)}`:'';
+  document.getElementById('order-total-display').textContent=fmt(total);
+}
+function buildWaiterSelect(){
+  const sel=document.getElementById('order-waiter');if(!sel)return;
+  if(S.waiterName){sel.innerHTML=`<option>${S.waiterName}</option>`;return;}
+  sel.innerHTML=staffList.waiters.map(n=>`<option>${n}</option>`).join('');
+}
+function renderTableGrid(){
+  const t=todayStr();
+  const activeTables=[...new Set(orders.filter(o=>o.date===t&&o.status!=='done').map(o=>String(o.table)))];
+  const unpaidTableNums=unpaidTables.map(u=>String(u.table));
+
+  // VIP / regular account people
+  const vipPeople=['Ty','Megan','Joshua','Amanda','Wesley','Ian'];
+
+  let html='';
+
+  // VIP tabs row
+  html+=`<div style="font-size:0.74rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">👤 Account Tabs</div>`;
+  html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">`;
+  vipPeople.forEach(name=>{
+    const reg=regulars.find(r=>r.name===name);
+    const disc=reg?.discount||0;
+    const has=activeTables.includes(name);
+    const unp=unpaidTableNums.includes(name);
+    html+=`<div class="table-btn ${S.selectedTable===name?'selected':''} ${unp?'unpaid':has?'has-order':''}" onclick="selectTable('${name}')">
+      <div style="font-size:1.1rem">👤</div>
+      <div style="font-weight:600">${name}</div>
+      <div style="font-size:0.65rem;color:var(--accent)">${disc>0?disc+'% off':'Tab'}</div>
+      ${unp?'<div style="font-size:0.62rem;color:var(--red)">💸Unpaid</div>':has?'<div style="font-size:0.62rem;color:var(--green)">●Active</div>':''}
+    </div>`;
+  });
+  html+=`</div>`;
+
+  // Numbered tables
+  html+=`<div style="font-size:0.74rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">🪑 Tables</div>`;
+  html+=`<div class="table-grid">`;
+  for(let i=1;i<=20;i++){
+    const key=String(i);
+    const has=activeTables.includes(key);
+    const unp=unpaidTableNums.includes(key);
+    html+=`<div class="table-btn ${S.selectedTable===i?'selected':''} ${unp?'unpaid':has?'has-order':''}" onclick="selectTable(${i})">
+      <div>🪑</div><div>Table ${i}</div>
+      ${unp?'<div style="font-size:0.63rem;color:var(--red)">💸Unpaid</div>':has?'<div style="font-size:0.63rem;color:var(--green)">●Active</div>':''}
+    </div>`;
+  }
+  html+=`</div>`;
+
+  document.getElementById('table-grid').innerHTML=html;
+}
+function selectTable(n){
+  S.selectedTable=n;
+  currentOrderItems=[];
+
+  // If it's a named person, auto-apply their discount and set as customer
+  if(typeof n==='string'&&isNaN(n)){
+    const reg=regulars.find(r=>r.name===n);
+    S.currentCustomer=reg||{name:n,discount:0,type:'regular'};
+    S.currentDiscount=reg?.discount||0;
+  }
+  // If numbered table, keep whatever customer is already selected
+  const lbl=typeof n==='string'&&isNaN(n)?n:`Table ${n}${S.currentCustomer?' — '+S.currentCustomer.name:''}`;
+  document.getElementById('selected-table-label').textContent=lbl;
+  document.getElementById('menu-section').style.display='block';
+  document.getElementById('current-order-section').style.display='block';
+  S.activeCat='All';renderMenuTiles();renderCurrentOrder();renderTableGrid();updateDiscountDisplay();
+
+  // Show close table section if orders exist
+  const t=todayStr();
+  const tableOrders=orders.filter(o=>o.date===t&&String(o.table)===String(n));
+  if(tableOrders.length){
+    document.getElementById('close-table-section').style.display='block';
+    document.getElementById('close-table-num').textContent=typeof n==='string'&&isNaN(n)?n:`Table ${n}`;
+    const allItems=tableOrders.flatMap(o=>o.allItems||o.items||[]);
+    const itemMap={};allItems.forEach(i=>{if(!itemMap[i.name])itemMap[i.name]={...i,qty:0};itemMap[i.name].qty+=i.qty;});
+    const total=tableOrders.reduce((a,o)=>a+(o.total||0),0);
+    document.getElementById('close-table-summary').innerHTML=`
+      ${Object.values(itemMap).map(i=>`<div class="order-item-row"><span>${i.qty}× ${i.name}</span><span>${fmt(i.price*i.qty)}</span></div>`).join('')}
+      <div style="font-weight:700;color:var(--accent);margin-top:6px;padding-top:5px;border-top:1px solid var(--border)">Total: ${fmt(total)}</div>`;
+  } else {
+    document.getElementById('close-table-section').style.display='none';
+  }
+}
+function closeTablePrintBill(){
+  const t=todayStr();const n=S.selectedTable;
+  const tableOrders=orders.filter(o=>o.date===t&&o.table===n);
+  if(!tableOrders.length)return;
+  const allItems=tableOrders.flatMap(o=>o.allItems||o.items||[]);
+  const itemMap={};allItems.forEach(i=>{if(!itemMap[i.name])itemMap[i.name]={...i,qty:0};itemMap[i.name].qty+=i.qty;});
+  const subtotal=tableOrders.reduce((a,o)=>a+(o.subtotal||o.total||0),0);
+  const discount=tableOrders.reduce((a,o)=>a+(o.discountAmt||0),0);
+  const total=tableOrders.reduce((a,o)=>a+(o.total||0),0);
+  const waiter=tableOrders[0].waiter;
+  const customer=tableOrders[0].customer||'';
+  const vatAmt=total*(15/115);const excl=total-vatAmt;
+  const bill=`HOLE IN THE WALL\n${'═'.repeat(28)}\nTable ${n}${customer?' | '+customer:''}\nWaiter: ${waiter}\n${todayStr()} ${new Date().toLocaleTimeString('en-ZA')}\n${'─'.repeat(28)}\n${Object.values(itemMap).map(i=>(`${i.qty}x ${i.name}`).padEnd(22)+fmt(i.price*i.qty)).join('\n')}\n${'─'.repeat(28)}\n${discount>0?`Subtotal:        ${fmt(subtotal)}\nDiscount:       -${fmt(discount)}\n`:''}TOTAL (Incl.VAT): ${fmt(total)}\nVAT (15%):        ${fmt(vatAmt)}\nNet Excl. VAT:    ${fmt(excl)}\n${'═'.repeat(28)}\nThank you! Please visit us again.\nFollow us on social media.`;
+  printWindow(bill);
+}
+function closeTablePrintKitchen(){
+  const t=todayStr();const n=S.selectedTable;
+  const tableOrders=orders.filter(o=>o.date===t&&o.table===n);
+  if(!tableOrders.length)return;
+  const allItems=tableOrders.flatMap(o=>o.items||[]);
+  const slip=`HOLE IN THE WALL — KITCHEN\nTable ${n} | ${todayStr()}\nWaiter: ${tableOrders[0]?.waiter}\n${'─'.repeat(26)}\n${allItems.map(i=>`${i.qty}x  ${i.name}`).join('\n')}\n${'─'.repeat(26)}\nPrinted: ${new Date().toLocaleTimeString('en-ZA')}`;
+  printWindow(slip);
+}
+function markTableUnpaid(){
+  const t=todayStr();const n=S.selectedTable;
+  const tableOrders=orders.filter(o=>o.date===t&&o.table===n);
+  if(!tableOrders.length){alert('No orders on this table today.');return;}
+  const total=tableOrders.reduce((a,o)=>a+(o.total||0),0);
+  const allItems=tableOrders.flatMap(o=>o.allItems||o.items||[]);
+  const notes=prompt('Any notes about this table?')||'';
+  unpaidTables.unshift({id:Date.now(),table:String(n),date:t,time:new Date().toLocaleTimeString('en-ZA'),total,items:allItems,notes});
+  persist();renderTableGrid();renderUnpaidTables();renderDashboard();
+  document.getElementById('close-table-section').style.display='none';
+  showMsg('order-msg',`💸 Table ${n} marked as unpaid and logged`);
+}
+function renderMenuTiles(){
+  const search=(document.getElementById('menu-search')?.value||'').toLowerCase();
+  const cats=['All',...new Set(menuItems.map(m=>m.cat))];
+  document.getElementById('cat-filter').innerHTML=cats.map(c=>`<div class="cat-pill ${S.activeCat===c?'active':''}" onclick="S.activeCat='${c}';renderMenuTiles()">${c}</div>`).join('');
+  const filtered=menuItems.filter(m=>(S.activeCat==='All'||m.cat===S.activeCat)&&(!search||m.name.toLowerCase().includes(search)));
+  document.getElementById('menu-tiles').innerHTML=filtered.map(m=>`
+    <div class="menu-tile" onclick="addToOrder(${m.id})"><div class="cat-tag">${m.cat}</div><div class="name">${m.name}</div><div class="price">${fmt(m.price)}</div></div>`).join('')||'<div class="empty-state">No items</div>';
+}
+function addToOrder(id){
+  const item=menuItems.find(m=>m.id===id);if(!item)return;
+  const ex=currentOrderItems.find(o=>o.id===id);
+  if(ex)ex.qty++;else currentOrderItems.push({...item,qty:1});
+  renderCurrentOrder();updateDiscountDisplay();
+}
+function renderCurrentOrder(){
+  document.getElementById('order-items-list').innerHTML=currentOrderItems.length?
+    currentOrderItems.map((item,idx)=>`
+      <div class="order-item-row" style="padding:3px 0;border-bottom:1px solid var(--border)">
+        <span>${item.name}</span>
+        <div style="display:flex;align-items:center;gap:4px">
+          <button class="btn-sm" style="padding:1px 5px" onclick="adjustQty(${idx},-1)">−</button>
+          <span>${item.qty}</span>
+          <button class="btn-sm" style="padding:1px 5px" onclick="adjustQty(${idx},1)">+</button>
+          <span style="min-width:58px;text-align:right;color:var(--accent)">${fmt(item.price*item.qty)}</span>
+        </div>
+      </div>`).join(''):'<div style="color:var(--muted);font-size:0.79rem;padding:4px 0">No items added</div>';
+  updateDiscountDisplay();
+}
+function adjustQty(idx,delta){
+  currentOrderItems[idx].qty+=delta;if(currentOrderItems[idx].qty<=0)currentOrderItems.splice(idx,1);
+  renderCurrentOrder();
+}
+function clearOrder(){currentOrderItems=[];renderCurrentOrder();}
+function submitOrder(){
+  if(!S.selectedTable||!currentOrderItems.length){showMsg('order-msg','Select table & add items first',false);return;}
+  const waiter=document.getElementById('order-waiter').value;
+  const notes=document.getElementById('order-notes').value;
+  const barItems=currentOrderItems.filter(i=>i.route==='bar'||i.route==='both');
+  const kitchenItems=currentOrderItems.filter(i=>i.route==='kitchen'||i.route==='both');
+  const subtotal=currentOrderItems.reduce((a,i)=>a+i.price*i.qty,0);
+  const discAmt=subtotal*(S.currentDiscount/100);const total=subtotal-discAmt;
+  const orderId=Date.now();const customer=S.currentCustomer?.name||null;
+  const base={id:orderId,table:S.selectedTable,customer,waiter,notes,date:todayStr(),time:new Date().toLocaleTimeString('en-ZA'),subtotal,discount:S.currentDiscount,discountAmt:discAmt,total,allItems:currentOrderItems,status:'pending'};
+  if(barItems.length)orders.unshift({...base,type:'bar',items:barItems});
+  if(kitchenItems.length)orders.unshift({...base,type:'kitchen',items:kitchenItems});
+  persist();clearOrder();renderActiveOrders();renderTableGrid();
+  showMsg('order-msg',`✅ Order sent! Table ${S.selectedTable}${customer?' — '+customer:''} — ${fmt(total)}`);
+}
+function renderActiveOrders(){
+  const t=todayStr();const todayOrders=orders.filter(o=>o.date===t).slice(0,20);
+  document.getElementById('active-orders-list').innerHTML=todayOrders.length?
+    todayOrders.map(o=>`
+      <div class="order-card">
+        <div class="order-header">
+          <div><strong>Table ${o.table}</strong>${o.customer?` <span class="badge badge-gold">${o.customer}</span>`:''} <span class="badge ${o.type==='bar'?'badge-blue':'badge-orange'}">${o.type==='bar'?'🍺 Bar':'🍳 Kitchen'}</span></div>
+          <div style="display:flex;gap:3px;align-items:center"><span style="font-size:0.71rem;color:var(--muted)">${o.time}</span><span class="badge ${o.status==='done'?'badge-green':'badge-yellow'}">${o.status}</span></div>
+        </div>
+        ${(o.items||[]).map(i=>`<div class="order-item-row"><span>${i.qty}x ${i.name}</span><span>${fmt(i.price*i.qty)}</span></div>`).join('')}
+        ${o.discount>0?`<div style="font-size:0.73rem;color:var(--red)">Discount: ${o.discount}%</div>`:''}
+        <div style="margin-top:3px;font-size:0.72rem;color:var(--muted)">Waiter: ${o.waiter} | ${fmt(o.total)}</div>
+        ${S.role==='waiter'?`<div style="display:flex;gap:4px;margin-top:6px">
+          <button class="btn-sm btn-accent" onclick="waiterPrintBill(${o.id})" style="flex:1;font-size:0.75rem">🧾 Customer Bill</button>
+          <button class="btn-sm" onclick="waiterPrintSlip(${o.id})" style="font-size:0.75rem">🍳 Kitchen Slip</button>
+        </div>`:''}
+      </div>`).join(''):'<div class="empty-state">No orders today yet</div>';
+}
+function buildBill(table,customer,waiter,items,subtotal,discount,total,vatAmt,excl){
+  const tableLabel=typeof table==='string'&&isNaN(table)?table:`Table ${table}`;
+  return `HOLE IN THE WALL\n${'═'.repeat(30)}\n${tableLabel}${customer&&customer!==table?' | '+customer:''}\nWaiter: ${waiter}\n${todayStr()} ${new Date().toLocaleTimeString('en-ZA')}\n${'─'.repeat(30)}\n${items.map(i=>{const left=`${i.qty}x ${i.name}`;const right=fmt(i.price*i.qty);return left.padEnd(30-right.length)+right;}).join('\n')}\n${'─'.repeat(30)}\n${discount>0?`Subtotal:         ${fmt(subtotal)}\nDiscount:        -${fmt(discount)}\n${'─'.repeat(30)}\n`:''}TOTAL (Incl. VAT): ${fmt(total)}\nVAT (15%):         ${fmt(vatAmt)}\nNet Excl. VAT:     ${fmt(excl)}\n${'═'.repeat(30)}\nThank you for visiting!\nFollow us on social media.`;
+}
+
+function waiterPrintBill(orderId){
+  const o=orders.find(x=>x.id===orderId);if(!o)return;
+  const items=o.allItems||o.items||[];
+  const vatAmt=(o.total||0)*(15/115);const excl=(o.total||0)-vatAmt;
+  const bill=buildBill(o.table,o.customer,o.waiter,items,o.subtotal,o.discountAmt||0,o.total,vatAmt,excl);
+  showBillPreview(bill);
+}
+function waiterPrintSlip(orderId){
+  const o=orders.find(x=>x.id===orderId);if(!o)return;
+  const slip=`HOLE IN THE WALL\n#${o.id.toString().slice(-4)} | Table ${o.table}\nWaiter: ${o.waiter} | ${o.time}\n${'─'.repeat(26)}\n${(o.items||[]).map(i=>`${i.qty}x  ${i.name}`).join('\n')}${o.notes?'\n\nNotes: '+o.notes:''}`;
+  printWindow(slip);
+}
+
+// ============ BAR & KITCHEN VIEWS ============
+function renderBarOrders(){
+  const t=todayStr();const barOrders=orders.filter(o=>o.type==='bar'&&o.date===t);
+  document.getElementById('bar-orders-queue').innerHTML=`<div class="grid2">
+    <div><h3 style="color:var(--accent);margin-bottom:7px">🔔 Pending (${barOrders.filter(o=>o.status==='pending').length})</h3>${barOrders.filter(o=>o.status==='pending').map(o=>qCard(o,'bar')).join('')||'<div class="empty-state">All clear!</div>'}</div>
+    <div><h3 style="color:var(--green);margin-bottom:7px">✅ Done (${barOrders.filter(o=>o.status==='done').length})</h3>${barOrders.filter(o=>o.status==='done').map(o=>qCard(o,'bar',true)).join('')||'<div class="empty-state">Nothing yet</div>'}</div>
+  </div>`;
+}
+function renderKitchenOrders(){
+  const t=todayStr();const kitOrders=orders.filter(o=>o.type==='kitchen'&&o.date===t);
+  document.getElementById('kitchen-orders-queue').innerHTML=`<div class="grid2">
+    <div><h3 style="color:var(--accent);margin-bottom:7px">🔔 Pending (${kitOrders.filter(o=>o.status==='pending').length})</h3>${kitOrders.filter(o=>o.status==='pending').map(o=>qCard(o,'kitchen')).join('')||'<div class="empty-state">All clear!</div>'}</div>
+    <div><h3 style="color:var(--green);margin-bottom:7px">✅ Done (${kitOrders.filter(o=>o.status==='done').length})</h3>${kitOrders.filter(o=>o.status==='done').map(o=>qCard(o,'kitchen',true)).join('')||'<div class="empty-state">Nothing yet</div>'}</div>
+  </div>`;
+}
+function qCard(o,type,done=false){
+  const isKitchen=type==='kitchen';
+  const slip=`HOLE IN THE WALL — ${isKitchen?'KITCHEN':'BAR'}\n#${o.id.toString().slice(-4)} | Table ${o.table}${o.customer?' | '+o.customer:''}\nWaiter: ${o.waiter} | ${o.time}\n${'─'.repeat(26)}\n${(o.items||[]).map(i=>`${i.qty}x  ${i.name}`).join('\n')}${o.notes?'\n\nNotes: '+o.notes:''}`;
+  return `<div class="queue-card ${!done?'new-order':''}">
+    <div class="order-header">
+      <div><strong>Table ${o.table}</strong>${o.customer?` <span class="badge badge-gold" style="font-size:0.66rem">${o.customer}</span>`:''} <span style="font-size:0.7rem;color:var(--muted);margin-left:3px">#${o.id.toString().slice(-4)}</span></div>
+      <span style="font-size:0.72rem;color:var(--muted)">${o.time}</span>
+    </div>
+    <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">Waiter: ${o.waiter}</div>
+    ${(o.items||[]).map(i=>`<div class="order-item-row"><span><strong>${i.qty}×</strong> ${i.name}</span><span style="color:var(--accent)">${fmt(i.price*i.qty)}</span></div>`).join('')}
+    ${o.discount>0?`<div style="font-size:0.72rem;color:var(--red);margin-top:3px">Discount: ${o.discount}% (${o.customer})</div>`:''}
+    ${o.notes?`<div style="margin-top:4px;font-size:0.73rem;background:#2a1f00;padding:3px 6px;border-radius:4px">📝 ${o.notes}</div>`:''}
+    <div style="margin-top:7px;display:flex;gap:4px;flex-wrap:wrap">
+      ${!done?`<button class="btn-sm btn-success" onclick="markDone(${o.id},'${type}')" style="flex:1">✅ Mark Done</button>`:''}
+      <button class="btn-sm" onclick="printWindow(\`${slip.replace(/`/g,"'")}\`)">🖨️ Slip</button>
+    </div>
+  </div>`;
+}
+function markDone(id,type){
+  const o=orders.find(x=>x.id===id&&x.type===type);if(o)o.status='done';
+  persist();if(type==='bar')renderBarOrders();else renderKitchenOrders();
+}
+function printWindow(txt){
+  // Create a hidden iframe to print from — avoids popup blockers and sandbox issues
+  const existing=document.getElementById('print-frame');
+  if(existing) existing.remove();
+  const iframe=document.createElement('iframe');
+  iframe.id='print-frame';
+  iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:380px;height:600px;border:none;';
+  document.body.appendChild(iframe);
+  const doc=iframe.contentDocument||iframe.contentWindow.document;
+  doc.open();
+  doc.write(`<!DOCTYPE html><html><head><style>
+    body{font-family:monospace;font-size:13px;padding:16px;line-height:1.65;color:#000;background:#fff;}
+    pre{white-space:pre-wrap;word-wrap:break-word;}
+    @media print{body{margin:0;padding:10px;}}
+  </style></head><body><pre>${txt}</pre></body></html>`);
+  doc.close();
+  setTimeout(()=>{
+    try{
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    }catch(e){
+      // Fallback: copy to clipboard and show alert
+      navigator.clipboard?.writeText(txt).catch(()=>{});
+      alert('Print dialog blocked. Slip content:\n\n'+txt);
+    }
+    setTimeout(()=>iframe.remove(),2000);
+  },300);
+}
+
+// ============ MENU MANAGEMENT ============
+function addMenuItem(){
+  const name=document.getElementById('mi-name').value.trim();const price=parseFloat(document.getElementById('mi-price').value)||0;
+  const cat=document.getElementById('mi-cat').value;const route=document.getElementById('mi-route').value;
+  if(!name||!price){showMsg('mi-msg','Enter name and price',false);return;}
+  menuItems.push({id:Date.now(),name,price,cat,route});
+  persist();renderMenuList();showMsg('mi-msg','✅ Added!');
+  document.getElementById('mi-name').value='';document.getElementById('mi-price').value='';
+}
+function renderMenuList(){
+  const f=(document.getElementById('menu-filter')?.value||'').toLowerCase();
+  const c=document.getElementById('menu-cat-filter')?.value||'';
+  const filtered=menuItems.filter(m=>(!f||m.name.toLowerCase().includes(f))&&(!c||m.cat===c));
+  const cats=['Burgers & Pregos','Platters','Light Meals','Ribs & Chicken','Wings & Strips','Pizza','White Wine','Red Wine','Wine by the Glass','Drinks Specials','Spirits','Beer & Cider','Soft Drinks','Other'];
+  document.getElementById('menu-count').textContent=filtered.length;
+  document.getElementById('menu-list').innerHTML=filtered.map(m=>`
+    <div class="menu-item-row">
+      <div style="flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <select style="width:148px;font-size:0.75rem" id="mcat-${m.id}" onchange="updateMenuItem(${m.id})">${cats.map(c=>`<option ${c===m.cat?'selected':''}>${c}</option>`).join('')}</select>
+        <input type="text" value="${m.name}" id="mname-${m.id}" style="flex:1;min-width:140px;font-size:0.81rem" onchange="updateMenuItem(${m.id})" />
+        <div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:0.76rem">R</span><input type="number" value="${m.price}" id="mprice-${m.id}" style="width:65px;font-weight:600;color:var(--accent)" onchange="updateMenuItem(${m.id})" /></div>
+        <select style="width:72px;font-size:0.75rem" id="mroute-${m.id}" onchange="updateMenuItem(${m.id})"><option ${m.route==='bar'?'selected':''} value="bar">Bar</option><option ${m.route==='kitchen'?'selected':''} value="kitchen">Kitchen</option><option ${m.route==='both'?'selected':''} value="both">Both</option></select>
+      </div>
+      <button class="btn-sm btn-danger" onclick="deleteMenuItem(${m.id})" style="padding:2px 6px;margin-left:4px">✕</button>
+    </div>`).join('')||'<div class="empty-state">No items</div>';
+}
+function updateMenuItem(id){
+  const item=menuItems.find(m=>m.id===id);if(!item)return;
+  const name=document.getElementById('mname-'+id)?.value.trim();const price=parseFloat(document.getElementById('mprice-'+id)?.value)||0;
+  const cat=document.getElementById('mcat-'+id)?.value;const route=document.getElementById('mroute-'+id)?.value;
+  if(name)item.name=name;if(price)item.price=price;if(cat)item.cat=cat;if(route)item.route=route;
+  persist();showMsg('mi-msg','✅ Updated!');
+}
+function deleteMenuItem(id){if(!confirm('Remove?'))return;menuItems=menuItems.filter(m=>m.id!==id);persist();renderMenuList();}
+
+// ============ STOCK ============
+function addStockItem(type){
+  const p=type==='bar'?'st':'ks';
+  const name=document.getElementById(`${p}-name`).value.trim();
+  const cat=document.getElementById(`${p}-cat`).value;const unit=document.getElementById(`${p}-unit`).value;
+  const qty=parseFloat(document.getElementById(`${p}-qty`).value)||0;const min=parseFloat(document.getElementById(`${p}-min`).value)||0;
+  const cost=parseFloat(document.getElementById(`${p}-cost`)?.value)||0;const retail=parseFloat(document.getElementById(`${p}-retail`)?.value)||0;
+  const portion=type==='kitchen'?(document.getElementById('ks-portion')?.value||''):null;
+  if(!name){showMsg(`${p}-msg`,'Enter a name',false);return;}
+  const item={id:Date.now(),name,cat,unit,qty,min,cost,retail,closing:null};
+  if(portion!==null)item.portion=portion;
+  if(type==='bar')barStock.push(item);else kitchenStock.push(item);
+  persist();if(type==='bar')renderBarStock();else renderKitchenStock();
+  showMsg(`${p}-msg`,'✅ Added!');
+  ['name','qty','min','cost','retail'].forEach(f=>{const el=document.getElementById(`${p}-${f}`);if(el)el.value='';});
+  if(type==='kitchen'){const pe=document.getElementById('ks-portion');if(pe)pe.value='';}
+}
+function renderBarStock(){
+  const s=(document.getElementById('bar-stock-search')?.value||'').toLowerCase();
+  const f=barStock.filter(i=>!s||i.name.toLowerCase().includes(s));
+  document.getElementById('bar-stock-count').textContent=f.length;
+  document.getElementById('bar-stock-list').innerHTML=f.map(i=>barStockRow(i)).join('')||'<div class="empty-state">No items</div>';
+}
+function renderKitchenStock(){
+  const s=(document.getElementById('kitchen-stock-search')?.value||'').toLowerCase();
+  const f=kitchenStock.filter(i=>!s||i.name.toLowerCase().includes(s));
+  document.getElementById('kitchen-stock-count').textContent=f.length;
+  document.getElementById('kitchen-stock-list').innerHTML=f.map(i=>kitchenStockRow(i)).join('')||'<div class="empty-state">No items</div>';
+}
+const barCats=['Spirits','Beer','Cider','Wine','Shots','RTD / Premix','Soft Drinks','Mixers','Water','Energy Drinks','Juice','Other'];
+const barUnits=['Tot (25ml)','Each','Liter','Bottle 750ml','Glass 250ml','Kilo gram'];
+const kitCats=['Meat & Poultry','Pork','Seafood','Vegetables','Dairy','Dry Goods','Sauces','Herbs & Spices','Frozen','Bread & Dough','Cheese','Other'];
+const kitUnits=['Each','Kilo gram','Gram','Liter','ml','portion','pack'];
+function barStockRow(item){
+  const low=parseFloat(item.qty)<=parseFloat(item.min);const isAdmin=S.role==='admin';
+  return `<div class="stock-row ${low?'low-stock':''}">
+    <div style="flex:1">
+      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:4px">
+        ${isAdmin?`<input type="text" value="${item.name}" style="flex:1;min-width:120px;font-size:0.8rem;font-weight:600" onchange="updateStockMeta(${item.id},'bar','name',this.value)" />`:`<span style="font-weight:600;flex:1;font-size:0.82rem">${item.name}</span>`}
+        ${isAdmin?`<select style="font-size:0.72rem;width:110px" onchange="updateStockMeta(${item.id},'bar','cat',this.value)">${barCats.map(c=>`<option ${c===item.cat?'selected':''}>${c}</option>`).join('')}</select>`:`<span class="badge badge-blue">${item.cat}</span>`}
+        ${isAdmin?`<select style="font-size:0.72rem;width:95px" onchange="updateStockMeta(${item.id},'bar','unit',this.value)">${barUnits.map(u=>`<option ${u===item.unit?'selected':''}>${u}</option>`).join('')}</select>`:`<span style="font-size:0.74rem;color:var(--muted)">${item.unit}</span>`}
+        ${low?'<span class="badge badge-red">Low</span>':''}
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
+        <div><label style="font-size:0.65rem">Opening</label><input type="number" value="${item.qty}" style="width:62px" onchange="updateStock(${item.id},'bar','qty',this.value)" /></div>
+        <div><label style="font-size:0.65rem">Closing</label><input type="number" value="${item.closing??''}" style="width:62px" placeholder="–" onchange="updateStock(${item.id},'bar','closing',this.value)" /></div>
+        <div><label style="font-size:0.65rem">Alert ≤</label><input type="number" value="${item.min}" style="width:52px" onchange="updateStock(${item.id},'bar','min',this.value)" /></div>
+        ${isAdmin?`<div><label style="font-size:0.65rem">Cost (R)</label><input type="number" value="${item.cost||0}" style="width:60px" onchange="updateStock(${item.id},'bar','cost',this.value)" /></div>`:''}
+        ${isAdmin?`<div><label style="font-size:0.65rem">Retail (R)</label><input type="number" value="${item.retail||0}" style="width:60px" onchange="updateStock(${item.id},'bar','retail',this.value)" /></div>`:''}
+        ${isAdmin?`<button class="btn-sm btn-danger" onclick="deleteStock(${item.id},'bar')" style="padding:2px 6px">✕</button>`:''}
+      </div>
+    </div>
+  </div>`;
+}
+function kitchenStockRow(item){
+  const low=parseFloat(item.qty)<=parseFloat(item.min);const isAdmin=S.role==='admin';
+  return `<div class="stock-row ${low?'low-stock':''}">
+    <div style="flex:1">
+      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:4px">
+        ${isAdmin?`<input type="text" value="${item.name}" style="flex:1;min-width:120px;font-size:0.8rem;font-weight:600" onchange="updateStockMeta(${item.id},'kitchen','name',this.value)" />`:`<span style="font-weight:600;flex:1;font-size:0.82rem">${item.name}</span>`}
+        ${isAdmin?`<select style="font-size:0.72rem;width:120px" onchange="updateStockMeta(${item.id},'kitchen','cat',this.value)">${kitCats.map(c=>`<option ${c===item.cat?'selected':''}>${c}</option>`).join('')}</select>`:`<span class="badge badge-orange">${item.cat}</span>`}
+        ${isAdmin?`<select style="font-size:0.72rem;width:90px" onchange="updateStockMeta(${item.id},'kitchen','unit',this.value)">${kitUnits.map(u=>`<option ${u===item.unit?'selected':''}>${u}</option>`).join('')}</select>`:`<span style="font-size:0.74rem;color:var(--muted)">${item.unit}</span>`}
+        ${low?'<span class="badge badge-red">Low</span>':''}
+      </div>
+      ${item.portion?`<div style="font-size:0.72rem;color:var(--muted);margin-bottom:4px">📏 Portion: ${item.portion}</div>`:''}
+      <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
+        <div><label style="font-size:0.65rem">Opening</label><input type="number" value="${item.qty}" style="width:62px" onchange="updateStock(${item.id},'kitchen','qty',this.value)" /></div>
+        <div><label style="font-size:0.65rem">Closing</label><input type="number" value="${item.closing??''}" style="width:62px" placeholder="–" onchange="updateStock(${item.id},'kitchen','closing',this.value)" /></div>
+        <div><label style="font-size:0.65rem">Alert ≤</label><input type="number" value="${item.min}" style="width:52px" onchange="updateStock(${item.id},'kitchen','min',this.value)" /></div>
+        ${isAdmin?`<div><label style="font-size:0.65rem">Cost (R)</label><input type="number" value="${item.cost||0}" style="width:60px" onchange="updateStock(${item.id},'kitchen','cost',this.value)" /></div>`:''}
+        ${isAdmin?`<div><label style="font-size:0.65rem">Retail (R)</label><input type="number" value="${item.retail||0}" style="width:60px" onchange="updateStock(${item.id},'kitchen','retail',this.value)" /></div>`:''}
+        ${isAdmin?`<div><label style="font-size:0.65rem">Portion</label><input type="text" value="${item.portion||''}" style="width:90px" placeholder="e.g. 200g" onchange="updateStockMeta(${item.id},'kitchen','portion',this.value)" /></div>`:''}
+        ${isAdmin?`<button class="btn-sm btn-danger" onclick="deleteStock(${item.id},'kitchen')" style="padding:2px 6px">✕</button>`:''}
+      </div>
+    </div>
+  </div>`;
+}
+function updateStockMeta(id,type,field,val){const arr=type==='bar'?barStock:kitchenStock;const item=arr.find(s=>s.id===id);if(item)item[field]=val;persist();}
+function updateStock(id,type,field,val){const arr=type==='bar'?barStock:kitchenStock;const item=arr.find(s=>s.id===id);if(item)item[field]=parseFloat(val)||0;persist();if(type==='bar')renderBarStock();else renderKitchenStock();}
+function deleteStock(id,type){if(!confirm('Remove?'))return;if(type==='bar')barStock=barStock.filter(s=>s.id!==id);else kitchenStock=kitchenStock.filter(s=>s.id!==id);persist();if(type==='bar')renderBarStock();else renderKitchenStock();}
+function saveStockTake(type){persist();showMsg(type==='bar'?'st-take-msg':'ks-take-msg',`✅ ${type==='bar'?'Bar':'Kitchen'} stock take saved!`);}
+
+// ============ DELIVERY / AI PHOTO UPLOAD ============
+let barDeliveryItems=[];
+let kitchenDeliveryItems=[];
+
+function handleStockPhotoDrop(e,type){
+  e.preventDefault();
+  document.getElementById(type==='bar'?'bar-photo-drop':'kitchen-photo-drop')?.classList.remove('drag');
+  const file=e.dataTransfer.files[0];
+  if(file) processStockPhoto(file,type);
+}
+function handleStockPhoto(e,type){
+  const file=e.target.files[0];
+  if(file) processStockPhoto(file,type);
+}
+
+async function processStockPhoto(file,type){
+  const resultEl=document.getElementById(type==='bar'?'bar-photo-result':'kitchen-photo-result');
+  const msgEl=document.getElementById(type==='bar'?'del-msg':'kdel-msg');
+  resultEl.innerHTML=`<div class="alert alert-info">🔍 Reading invoice with AI — please wait...</div>`;
+
+  try {
+    // Convert file to base64
+    const base64=await new Promise((res,rej)=>{
+      const r=new FileReader();
+      r.onload=()=>res(r.result.split(',')[1]);
+      r.onerror=rej;
+      r.readAsDataURL(file);
+    });
+
+    const isImage=file.type.startsWith('image/');
+    const isPdf=file.type==='application/pdf';
+
+    let messages;
+    if(isImage){
+      messages=[{
+        role:'user',
+        content:[
+          {type:'image',source:{type:'base64',media_type:file.type,data:base64}},
+          {type:'text',text:`This is a liquor/food supplier delivery invoice or tax invoice. Extract ALL line items from the table. For each item return ONLY a JSON array with no markdown, no explanation, just the raw JSON array. Each object must have exactly these fields: "name" (product description, clean and readable), "qty" (total quantity as a number — if QTY and Pack Size columns exist, multiply them together to get the total units), "pack" (pack size as a string e.g. "750ml", "330ml x24", "6 pack"). Example: [{"name":"Jameson 750ml","qty":6,"pack":"750ml"},{"name":"Coke 300ml PET","qty":240,"pack":"300ml x24"}]. Return only the JSON array.`}
+        ]
+      }];
+    } else {
+      // PDF — send as document
+      messages=[{
+        role:'user',
+        content:[
+          {type:'document',source:{type:'base64',media_type:'application/pdf',data:base64}},
+          {type:'text',text:`This is a supplier delivery invoice. Extract ALL line items. Return ONLY a raw JSON array (no markdown, no explanation) where each object has: "name" (product description), "qty" (total units — multiply QTY × Pack Size if both present), "pack" (pack size as string). Example: [{"name":"Jameson 750ml","qty":6,"pack":"750ml"}]`}
+        ]
+      }];
+    }
+
+    const response=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages
+      })
+    });
+
+    const data=await response.json();
+    const text=data.content?.find(b=>b.type==='text')?.text||'';
+
+    // Parse JSON from response
+    let items=[];
+    try {
+      const clean=text.replace(/```json|```/g,'').trim();
+      items=JSON.parse(clean);
+    } catch(e){
+      // Try to find JSON array in the text
+      const match=text.match(/\[[\s\S]*\]/);
+      if(match) items=JSON.parse(match[0]);
+    }
+
+    if(!Array.isArray(items)||items.length===0){
+      resultEl.innerHTML=`<div class="alert alert-error">⚠️ Could not extract items. Try a clearer photo or use manual entry below.</div>`;
+      return;
+    }
+
+    // Populate delivery list
+    if(type==='bar') barDeliveryItems=items.map(i=>({name:i.name||'',qty:parseFloat(i.qty)||0,pack:i.pack||''}));
+    else kitchenDeliveryItems=items.map(i=>({name:i.name||'',qty:parseFloat(i.qty)||0,pack:i.pack||''}));
+
+    renderDeliveryList(type);
+    resultEl.innerHTML=`<div class="alert alert-success">✅ AI extracted <strong>${items.length} items</strong> from <strong>${file.name}</strong>. Review below, edit if needed, then click Apply.</div>`;
+
+  } catch(err){
+    console.error(err);
+    resultEl.innerHTML=`<div class="alert alert-error">❌ Error reading invoice: ${err.message}. Use manual entry below.</div>`;
+  }
+}
+
+function addDelivery(type){
+  const p=type==='bar'?'del':'kdel';
+  const name=document.getElementById(`${p}-name`).value.trim();
+  const qty=parseFloat(document.getElementById(`${p}-qty`).value)||0;
+  const pack=document.getElementById(`${p}-pack`).value.trim();
+  if(!name){showMsg(type==='bar'?'del-msg':'kdel-msg','Enter an item name',false);return;}
+  if(type==='bar') barDeliveryItems.push({name,qty,pack});
+  else kitchenDeliveryItems.push({name,qty,pack});
+  document.getElementById(`${p}-name`).value='';
+  document.getElementById(`${p}-qty`).value='';
+  document.getElementById(`${p}-pack`).value='';
+  renderDeliveryList(type);
+}
+
+function renderDeliveryList(type){
+  const items=type==='bar'?barDeliveryItems:kitchenDeliveryItems;
+  const listEl=document.getElementById(type==='bar'?'del-list':'kdel-list');
+  const countEl=document.getElementById(type==='bar'?'bar-del-count':'kitchen-del-count');
+  if(countEl) countEl.textContent=items.length?`(${items.length} items)`:'';
+  if(!listEl) return;
+  listEl.innerHTML=items.length?`
+    <div style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:7px;margin-bottom:6px">
+      ${items.map((d,i)=>`
+        <div class="order-item-row" style="padding:5px 9px;border-bottom:1px solid var(--border)">
+          <div style="flex:1;display:flex;align-items:center;gap:6px">
+            <input type="number" value="${d.qty}" style="width:55px" onchange="editDeliveryItem(${i},'qty',this.value,'${type}')" title="Qty" />
+            <input type="text" value="${d.name}" style="flex:1;font-size:0.8rem" onchange="editDeliveryItem(${i},'name',this.value,'${type}')" />
+            <input type="text" value="${d.pack}" style="width:90px;font-size:0.78rem;color:var(--muted)" onchange="editDeliveryItem(${i},'pack',this.value,'${type}')" placeholder="pack size" />
+          </div>
+          <button class="btn-sm btn-danger" onclick="removeDelivery(${i},'${type}')" style="padding:1px 5px;margin-left:5px">✕</button>
+        </div>`).join('')}
+    </div>`:'<div style="color:var(--muted);font-size:0.8rem;padding:6px 0">No items yet</div>';
+}
+
+function editDeliveryItem(i,field,val,type){
+  const items=type==='bar'?barDeliveryItems:kitchenDeliveryItems;
+  if(field==='qty') items[i].qty=parseFloat(val)||0;
+  else items[i][field]=val;
+}
+function removeDelivery(i,type){
+  if(type==='bar') barDeliveryItems.splice(i,1);
+  else kitchenDeliveryItems.splice(i,1);
+  renderDeliveryList(type);
+}
+
+function applyDelivery(type){
+  const items=type==='bar'?barDeliveryItems:kitchenDeliveryItems;
+  const stock=type==='bar'?barStock:kitchenStock;
+  const msgId=type==='bar'?'del-msg':'kdel-msg';
+  if(!items.length){showMsg(msgId,'No items to apply',false);return;}
+  let updated=0,notFound=[];
+  items.forEach(d=>{
+    // Fuzzy match — check if stock item name contains key words from delivery item
+    const dWords=d.name.toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(' ').filter(w=>w.length>2);
+    const item=stock.find(s=>{
+      const sName=s.name.toLowerCase();
+      return dWords.some(w=>sName.includes(w));
+    });
+    if(item){item.qty=parseFloat(item.qty||0)+parseFloat(d.qty||0);updated++;}
+    else notFound.push(d.name);
+  });
+  persist();
+  if(type==='bar') renderBarStock();
+  else renderKitchenStock();
+  const notFoundMsg=notFound.length?` | ${notFound.length} not matched: ${notFound.slice(0,3).join(', ')}${notFound.length>3?'…':''}. Add them as new items manually.`:'';
+  showMsg(msgId,`✅ ${updated} item(s) updated!${notFoundMsg}`,notFound.length===0);
+}
+
+function printDeliveryNote(type){
+  const items=type==='bar'?barDeliveryItems:kitchenDeliveryItems;
+  if(!items.length){alert('No delivery items to print.');return;}
+  const lines=items.map(d=>`${String(d.qty).padEnd(6)} ${d.name.padEnd(28)} ${d.pack||''}`).join('\n');
+  const note=`HOLE IN THE WALL\n${type==='bar'?'BAR':'KITCHEN'} DELIVERY NOTE\n${'─'.repeat(44)}\n${todayStr()} ${new Date().toLocaleTimeString('en-ZA')}\n${'─'.repeat(44)}\nQTY    ITEM                         PACK SIZE\n${'─'.repeat(44)}\n${lines}\n${'─'.repeat(44)}\nTotal line items: ${items.length}\n\nReceived by:  ___________________\nDriver sig:   ___________________\nDate:         ___________________`;
+  printWindow(note);
+}
+
+// ============ REPORTS ============
+function renderReports(){
+  const sel=document.getElementById('report-month');
+  const months=[...new Set(cashups.map(c=>c.date.slice(0,7)))];
+  if(!months.length)months.push(new Date().toISOString().slice(0,7));
+  const cur=sel.value;
+  sel.innerHTML=months.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${m}</option>`).join('');
+  const m=sel.value||months[0];const rows=cashups.filter(c=>c.date.startsWith(m));
+  let tots={alcohol:0,bev:0,wine:0,food:0,exp:0,exclVat:0,vat:0,subtotal:0,cash:0,card:0,tips:0,total:0};
+  document.getElementById('report-body').innerHTML=rows.map(c=>{
+    Object.keys(tots).forEach(k=>tots[k]+=(parseFloat(c[k])||0));
+    return `<tr><td>${c.date}</td><td>${fmt(c.alcohol)}</td><td>${fmt(c.bev)}</td><td>${fmt(c.wine)}</td><td>${fmt(c.food)}</td><td style="color:var(--red)">${fmt(c.exp)}</td><td style="font-weight:600">${fmt(c.subtotal)}</td><td style="color:var(--muted)">${fmt(c.vat)}</td><td>${fmt(c.exclVat)}</td><td>${fmt(c.cash)}</td><td>${fmt(c.card)}</td><td style="color:var(--green)">${fmt(c.tips)}</td><td style="font-weight:700;color:var(--accent)">${fmt(c.total)}</td></tr>`;
+  }).join('')||'<tr><td colspan="13" class="empty-state">No data</td></tr>';
+  document.getElementById('report-foot').innerHTML=`<tr style="background:var(--surface2);font-weight:700"><td>TOTALS</td><td>${fmt(tots.alcohol)}</td><td>${fmt(tots.bev)}</td><td>${fmt(tots.wine)}</td><td>${fmt(tots.food)}</td><td style="color:var(--red)">${fmt(tots.exp)}</td><td>${fmt(tots.subtotal)}</td><td style="color:var(--muted)">${fmt(tots.vat)}</td><td>${fmt(tots.exclVat)}</td><td>${fmt(tots.cash)}</td><td>${fmt(tots.card)}</td><td style="color:var(--green)">${fmt(tots.tips)}</td><td style="color:var(--accent)">${fmt(tots.total)}</td></tr>`;
+}
+
+// ============ REGULARS / SETTINGS ============
+function renderRegularsSettings(){
+  const typeLabel={management:'🏷️ Tab',promo:'🎭 Promo',regular:'⭐ Regular'};
+  document.getElementById('regulars-settings-list').innerHTML=regulars.map(r=>`
+    <div class="stock-row"><span style="font-weight:600;min-width:75px">${r.name}</span>
+    <span class="badge ${r.type==='management'?'badge-gold':r.type==='promo'?'badge-promo':'badge-blue'}">${typeLabel[r.type]||r.type}</span>
+    <span style="flex:1;text-align:center;color:var(--accent)">${r.discount>0?r.discount+'% off':'No discount'}</span>
+    <button class="btn-sm btn-danger" onclick="deleteRegular(${r.id})" style="padding:2px 6px">✕</button></div>`).join('')||'<div class="empty-state">No regulars</div>';
+}
+function addRegular(){
+  const name=document.getElementById('reg-name').value.trim();const disc=parseFloat(document.getElementById('reg-disc').value)||0;const type=document.getElementById('reg-type').value;
+  if(!name){showMsg('reg-msg','Enter a name',false);return;}
+  regulars.push({id:Date.now(),name,discount:disc,type});persist();renderRegularsSettings();showMsg('reg-msg','✅ Added!');
+  document.getElementById('reg-name').value='';document.getElementById('reg-disc').value='';
+}
+function deleteRegular(id){if(!confirm('Remove?'))return;regulars=regulars.filter(r=>r.id!==id);persist();renderRegularsSettings();}
+function loadSettings(){document.getElementById('staff-waiters').value=staffList.waiters.join(', ');document.getElementById('staff-bartenders').value=staffList.bartenders.join(', ');}
+function changePass(who){
+  if(who==='admin'){const np=document.getElementById('new-admin-pass').value;if(!np){showMsg('pass-msg','Enter password',false);return;}passwords.admin=np;}
+  else{const bp=document.getElementById('new-barman-pass').value;const wp=document.getElementById('new-waiter-pass').value;const kp=document.getElementById('new-kitchen-pass').value;
+    if(bp)passwords.barman=bp;if(wp)passwords.waiter=wp;if(kp)passwords.kitchen=kp;}
+  persist();showMsg('pass-msg','✅ Updated!');
+}
+function saveStaff(){
+  const w=document.getElementById('staff-waiters').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const b=document.getElementById('staff-bartenders').value.split(',').map(s=>s.trim()).filter(Boolean);
+  staffList={waiters:w,bartenders:b};persist();showMsg('staff-msg','✅ Staff updated!');
+}
+function clearAllData(){if(!confirm('⚠️ Clear ALL data?'))return;cashups=[];tipsData=[];reconData=[];orders=[];promoLog=[];unpaidTables=[];waiterTipsLog=[];persist();renderDashboard();showMsg('staff-msg','Data cleared.');}
+function renderAll(){renderCashupHistory();renderTipsHistory();renderReconHistory();renderBarStock();renderKitchenStock();renderMenuList();}
+</script>
+</body>
+</html>
