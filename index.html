@@ -687,9 +687,96 @@ let currentOrderItems=[];
 let bankTransactions=[];
 let waiterTipEntries=[];
 
+// ============ FIREBASE SETUP ============
+const fbConfig={
+  apiKey:"AIzaSyAJD2kqnlErMkuu0bNeGUyavhh8txLUtyc",
+  authDomain:"hole-in-the-wall-b6647.firebaseapp.com",
+  databaseURL:"https://hole-in-the-wall-b6647-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"hole-in-the-wall-b6647",
+  storageBucket:"hole-in-the-wall-b6647.firebasestorage.app",
+  messagingSenderId:"713444315787",
+  appId:"1:713444315787:web:f39ed51118342af800ba8e"
+};
+// Load Firebase from CDN
+let fbDatabase=null, fbRef=null, fbSet=null, fbGet=null, fbOnValue=null;
+async function initFirebase(){
+  try{
+    const {initializeApp}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+    const {getDatabase,ref,set,get,onValue}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    const app=initializeApp(fbConfig);
+    fbDatabase=getDatabase(app);
+    fbRef=ref; fbSet=set; fbGet=get; fbOnValue=onValue;
+    console.log('✅ Firebase connected');
+    await loadAllFromFirebase();
+    setupRealtimeListeners();
+  }catch(e){
+    console.warn('Firebase failed, using localStorage fallback:',e);
+  }
+}
+
 // ============ STORAGE ============
-const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
-const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}};
+// Always write to localStorage as cache + Firebase as source of truth
+const save=(k,v)=>{
+  try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}
+  if(fbDatabase&&fbSet&&fbRef){
+    fbSet(fbRef(fbDatabase,'hitw/'+k),v).catch(e=>console.warn('FB save error:',e));
+  }
+};
+const load=(k,d)=>{
+  try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}
+};
+
+async function loadAllFromFirebase(){
+  if(!fbDatabase) return;
+  const keys=['hitw_pw','hitw_staff','hitw_regulars','hitw_cashups','hitw_tips','hitw_recon',
+               'hitw_orders','hitw_menu','hitw_barstock','hitw_kstock','hitw_promo','hitw_unpaid','hitw_waitertips'];
+  for(const k of keys){
+    try{
+      const snap=await fbGet(fbRef(fbDatabase,'hitw/'+k));
+      if(snap.exists()){
+        const val=snap.val();
+        localStorage.setItem(k,JSON.stringify(val));
+      }
+    }catch(e){console.warn('FB load error for',k,e);}
+  }
+  // Reload all data variables from (now updated) localStorage
+  passwords=load('hitw_pw',{admin:'admin123',barman:'bar123',waiter:'wait123',kitchen:'kit123'});
+  staffList=load('hitw_staff',{waiters:['Tanya','Kim','Marcus','Chris','K'],bartenders:['Matthew','Festus']});
+  regulars=load('hitw_regulars',regulars);
+  cashups=load('hitw_cashups',[]);
+  tipsData=load('hitw_tips',[]);
+  reconData=load('hitw_recon',[]);
+  orders=load('hitw_orders',[]);
+  menuItems=load('hitw_menu',menuItems);
+  barStock=load('hitw_barstock',barStock);
+  kitchenStock=load('hitw_kstock',kitchenStock);
+  promoLog=load('hitw_promo',[]);
+  unpaidTables=load('hitw_unpaid',[]);
+  waiterTipsLog=load('hitw_waitertips',[]);
+  console.log('✅ Data loaded from Firebase');
+}
+
+function setupRealtimeListeners(){
+  if(!fbDatabase||!fbOnValue) return;
+  // Listen for changes from other devices and update local state
+  const watchKeys={
+    'hitw_orders':()=>{ orders=load('hitw_orders',[]); renderActiveOrders&&renderActiveOrders(); renderBarOrders&&renderBarOrders(); renderKitchenOrders&&renderKitchenOrders(); renderDashboard&&renderDashboard(); },
+    'hitw_cashups':()=>{ cashups=load('hitw_cashups',[]); renderCashupHistory&&renderCashupHistory(); },
+    'hitw_tips':()=>{ tipsData=load('hitw_tips',[]); },
+    'hitw_promo':()=>{ promoLog=load('hitw_promo',[]); renderDashboard&&renderDashboard(); },
+    'hitw_unpaid':()=>{ unpaidTables=load('hitw_unpaid',[]); renderDashboard&&renderDashboard(); },
+    'hitw_barstock':()=>{ barStock=load('hitw_barstock',barStock); },
+    'hitw_kstock':()=>{ kitchenStock=load('hitw_kstock',kitchenStock); },
+  };
+  Object.entries(watchKeys).forEach(([k,fn])=>{
+    fbOnValue(fbRef(fbDatabase,'hitw/'+k),(snap)=>{
+      if(snap.exists()){
+        localStorage.setItem(k,JSON.stringify(snap.val()));
+        fn();
+      }
+    });
+  });
+}
 
 // ============ DATA ============
 let passwords=load('hitw_pw',{admin:'admin123',barman:'bar123',waiter:'wait123',kitchen:'kit123',tanya:'tanya123',kim:'kim123',marcus:'marcus123',chris:'chris123',k:'k123'});
@@ -2098,7 +2185,21 @@ function saveStaff(){
   staffList={waiters:w,bartenders:b};persist();showMsg('staff-msg','✅ Staff updated!');
 }
 function clearAllData(){if(!confirm('⚠️ Clear ALL data?'))return;cashups=[];tipsData=[];reconData=[];orders=[];promoLog=[];unpaidTables=[];waiterTipsLog=[];persist();renderDashboard();showMsg('staff-msg','Data cleared.');}
-function renderAll(){renderCashupHistory();renderTipsHistory();renderReconHistory();renderBarStock();renderKitchenStock();renderMenuList();}
+function renderAll(){
+  renderCashupHistory();renderTipsHistory();renderReconHistory();
+  renderBarStock();renderKitchenStock();renderMenuList();
+}
+
+// ============ INIT ============
+window.addEventListener('load',async()=>{
+  await initFirebase();
+  const fbSt=document.getElementById('fb-status');
+  if(fbDatabase){
+    if(fbSt) fbSt.innerHTML='<span style="color:var(--green)">🟢 Live</span>';
+  } else {
+    if(fbSt) fbSt.innerHTML='<span style="color:var(--orange)">🟡 Offline</span>';
+  }
+});
 </script>
 </body>
 </html>
