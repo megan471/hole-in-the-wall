@@ -1987,11 +1987,9 @@ function handleStockPhoto(e,type){
 
 async function processStockPhoto(file,type){
   const resultEl=document.getElementById(type==='bar'?'bar-photo-result':'kitchen-photo-result');
-  const msgEl=document.getElementById(type==='bar'?'del-msg':'kdel-msg');
   resultEl.innerHTML=`<div class="alert alert-info">🔍 Reading invoice with AI — please wait...</div>`;
 
-  try {
-    // Convert file to base64
+  try{
     const base64=await new Promise((res,rej)=>{
       const r=new FileReader();
       r.onload=()=>res(r.result.split(',')[1]);
@@ -2000,67 +1998,60 @@ async function processStockPhoto(file,type){
     });
 
     const isImage=file.type.startsWith('image/');
-    const isPdf=file.type==='application/pdf';
+    const mediaType=isImage?file.type:'application/pdf';
+    const prompt=`This is a liquor or food supplier delivery invoice or tax invoice. Extract ALL line items from the table. Return ONLY a raw JSON array with no markdown, no code blocks, no explanation. Each object must have exactly: "name" (product description, clean and readable), "qty" (total quantity as a number — if QTY and Pack Size columns both exist, multiply them to get total units delivered), "pack" (pack size as a string e.g. "750ml", "330ml x24"). Example output: [{"name":"Jameson 750ml","qty":6,"pack":"750ml"},{"name":"Coke 300ml PET","qty":240,"pack":"300ml x24"}]`;
 
-    let messages;
-    if(isImage){
-      messages=[{
-        role:'user',
-        content:[
-          {type:'image',source:{type:'base64',media_type:file.type,data:base64}},
-          {type:'text',text:`This is a liquor/food supplier delivery invoice or tax invoice. Extract ALL line items from the table. For each item return ONLY a JSON array with no markdown, no explanation, just the raw JSON array. Each object must have exactly these fields: "name" (product description, clean and readable), "qty" (total quantity as a number — if QTY and Pack Size columns exist, multiply them together to get the total units), "pack" (pack size as a string e.g. "750ml", "330ml x24", "6 pack"). Example: [{"name":"Jameson 750ml","qty":6,"pack":"750ml"},{"name":"Coke 300ml PET","qty":240,"pack":"300ml x24"}]. Return only the JSON array.`}
-        ]
-      }];
-    } else {
-      // PDF — send as document
-      messages=[{
-        role:'user',
-        content:[
-          {type:'document',source:{type:'base64',media_type:'application/pdf',data:base64}},
-          {type:'text',text:`This is a supplier delivery invoice. Extract ALL line items. Return ONLY a raw JSON array (no markdown, no explanation) where each object has: "name" (product description), "qty" (total units — multiply QTY × Pack Size if both present), "pack" (pack size as string). Example: [{"name":"Jameson 750ml","qty":6,"pack":"750ml"}]`}
-        ]
-      }];
-    }
+    const contentBlock=isImage
+      ? [{type:'image',source:{type:'base64',media_type:mediaType,data:base64}},{type:'text',text:prompt}]
+      : [{type:'document',source:{type:'base64',media_type:'application/pdf',data:base64}},{type:'text',text:prompt}];
 
     const response=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key': typeof ANTHROPIC_API_KEY !== 'undefined' ? ANTHROPIC_API_KEY : '',
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        messages
+        max_tokens:2000,
+        messages:[{role:'user',content:contentBlock}]
       })
     });
+
+    if(!response.ok){
+      const errText=await response.text();
+      throw new Error(`API error ${response.status}: ${errText}`);
+    }
 
     const data=await response.json();
     const text=data.content?.find(b=>b.type==='text')?.text||'';
 
-    // Parse JSON from response
     let items=[];
-    try {
+    try{
       const clean=text.replace(/```json|```/g,'').trim();
       items=JSON.parse(clean);
-    } catch(e){
-      // Try to find JSON array in the text
+    }catch(e){
       const match=text.match(/\[[\s\S]*\]/);
       if(match) items=JSON.parse(match[0]);
+      else throw new Error('Could not parse AI response. Try a clearer photo.');
     }
 
     if(!Array.isArray(items)||items.length===0){
-      resultEl.innerHTML=`<div class="alert alert-error">⚠️ Could not extract items. Try a clearer photo or use manual entry below.</div>`;
+      resultEl.innerHTML=`<div class="alert alert-error">⚠️ No items found. Try a clearer photo or use manual entry below.</div>`;
       return;
     }
 
-    // Populate delivery list
-    if(type==='bar') barDeliveryItems=items.map(i=>({name:i.name||'',qty:parseFloat(i.qty)||0,pack:i.pack||''}));
-    else kitchenDeliveryItems=items.map(i=>({name:i.name||'',qty:parseFloat(i.qty)||0,pack:i.pack||''}));
+    if(type==='bar') barDeliveryItems=items.map(i=>({name:String(i.name||''),qty:parseFloat(i.qty)||0,pack:String(i.pack||'')}));
+    else kitchenDeliveryItems=items.map(i=>({name:String(i.name||''),qty:parseFloat(i.qty)||0,pack:String(i.pack||'')}));
 
     renderDeliveryList(type);
-    resultEl.innerHTML=`<div class="alert alert-success">✅ AI extracted <strong>${items.length} items</strong> from <strong>${file.name}</strong>. Review below, edit if needed, then click Apply.</div>`;
+    resultEl.innerHTML=`<div class="alert alert-success">✅ AI extracted <strong>${items.length} items</strong> from <strong>${file.name}</strong>. Review below then click Apply.</div>`;
 
-  } catch(err){
-    console.error(err);
-    resultEl.innerHTML=`<div class="alert alert-error">❌ Error reading invoice: ${err.message}. Use manual entry below.</div>`;
+  }catch(err){
+    console.error('Stock photo error:',err);
+    resultEl.innerHTML=`<div class="alert alert-error">❌ ${err.message||'Error reading invoice'}. Use manual entry below.</div>`;
   }
 }
 
