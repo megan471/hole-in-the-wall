@@ -702,7 +702,7 @@ tr:hover td{background:var(--surface2);}
               <h3>➕ Add Kitchen Item</h3>
               <div class="form-row">
                 <div class="form-group"><label>Name</label><input type="text" id="ks-name"/></div>
-                <div class="form-group"><label>Category</label><select id="ks-cat"><option>Meat & Poultry</option><option>Pork</option><option>Seafood</option><option>Vegetables</option><option>Dairy</option><option>Dry Goods</option><option>Sauces</option><option>Herbs & Spices</option><option>Frozen</option><option>Bread & Dough</option><option>Cheese</option><option>Other</option></select></div>
+                <div class="form-group"><label>Category</label><select id="ks-cat"><option>Meat & Poultry</option><option>Pork</option><option>Seafood</option><option>Vegetables</option><option>Dairy</option><option>Dry Goods</option><option>Sauces</option><option>Condiments</option><option>Herbs & Spices</option><option>Frozen</option><option>Bread & Dough</option><option>Cheese</option><option>Cleaning Products</option><option>Other</option></select></div>
                 <div class="form-group"><label>Unit</label><select id="ks-unit"><option>Each</option><option>Kilo gram</option><option>Gram</option><option>Liter</option><option>ml</option><option>portion</option><option>pack</option></select></div>
               </div>
               <div class="form-row">
@@ -1728,14 +1728,19 @@ async function processStockPhoto(file,type){
     const mediaType=isImage?file.type:'application/pdf';
     const blockType=isImage?'image':'document';
 
-    const prompt=`You are a stock/delivery invoice reader for a pub.
-Extract every line item from this ${isImage?'photo':'PDF'} of a delivery note or invoice.
+    const prompt=`You are a stock management system reader for a pub/restaurant kitchen.
+Extract EVERY line item from this ${isImage?'image':'PDF'}.
+This may be a stock take (current counts) or a delivery note (quantities received) - handle both.
 Return ONLY a raw JSON array. No markdown, no explanation, no backticks.
-Each object must have: {"name":"product name","qty":5,"pack":"750ml bottle"}
-- name: the product name as written on the invoice
-- qty: the quantity delivered (number only)
-- pack: pack size or unit (e.g. "6x440ml can", "750ml", "5L", "each", "case of 24")
-If qty is unclear, use 1. Start array with [ and end with ].`;
+Each object must have exactly: {"name":"product name","qty":5,"pack":"unit"}
+Rules:
+- name: the product name exactly as written
+- qty: the number shown. Fractions like 1/2 = 0.5. If zero, use 0. Never skip items.
+- pack: the unit or size shown (e.g. "Each", "kg", "Liter", "1L", "Portions", "Roll", "Box", "Portions (8)")
+- Include ALL items across ALL sections (Bread, Pizza, Meat, Sauces, Bulk, Staff Meals, Spices, Cleaning Products, etc)
+- Items with qty 0 must still be included with qty:0
+- Section headings like BREAD, MEAT, SAUCES are not items - skip them
+Start with [ and end with ]. Nothing else.`;
 
     const requestBody={
       model:'claude-sonnet-4-20250514',
@@ -3015,26 +3020,91 @@ function defaultBarStock(){return[
 ];}
 
 function defaultKitStock(){return[
-  {id:1,name:'Beef Burger Patty',cat:'Meat & Poultry',unit:'Each',qty:0,min:10,cost:0,retail:0,portion:'1 per burger',closing:null,todayDeducted:0},
-  {id:2,name:'Bacon',cat:'Meat & Poultry',unit:'Each',qty:0,min:5,cost:0,retail:0,portion:'2 rashers',closing:null,todayDeducted:0},
-  {id:3,name:'Chicken Fillet',cat:'Meat & Poultry',unit:'Each',qty:0,min:6,cost:0,retail:0,portion:'1 per portion',closing:null,todayDeducted:0},
-  {id:4,name:'Chicken Wings',cat:'Meat & Poultry',unit:'Each',qty:0,min:20,cost:0,retail:0,portion:'6 per portion',closing:null,todayDeducted:0},
-  {id:5,name:'Chicken Strips',cat:'Meat & Poultry',unit:'Each',qty:0,min:10,cost:0,retail:0,portion:'5 per portion',closing:null,todayDeducted:0},
-  {id:6,name:'Pork Ribs 500g',cat:'Pork',unit:'Each',qty:0,min:5,cost:0,retail:0,portion:'500g rack',closing:null,todayDeducted:0},
-  {id:7,name:'Cheese Grillers',cat:'Meat & Poultry',unit:'Each',qty:0,min:8,cost:0,retail:0,portion:'8 per portion',closing:null,todayDeducted:0},
-  {id:8,name:'Halloumi',cat:'Cheese',unit:'Each',qty:0,min:2,cost:0,retail:0,portion:'½ block',closing:null,todayDeducted:0},
-  {id:9,name:'Burger Buns',cat:'Bread & Dough',unit:'Each',qty:0,min:20,cost:0,retail:0,portion:'1 per burger',closing:null,todayDeducted:0},
-  {id:10,name:'Portugese Roll',cat:'Bread & Dough',unit:'Each',qty:0,min:10,cost:0,retail:0,portion:'1 per prego',closing:null,todayDeducted:0},
-  {id:11,name:'Pizza Base',cat:'Bread & Dough',unit:'Each',qty:0,min:8,cost:0,retail:0,portion:'1 per pizza',closing:null,todayDeducted:0},
-  {id:12,name:'Wrap',cat:'Bread & Dough',unit:'Each',qty:0,min:8,cost:0,retail:0,portion:'1 per wrap',closing:null,todayDeducted:0},
-  {id:13,name:'Chips / Fries',cat:'Frozen',unit:'Kilo gram',qty:0,min:5,cost:0,retail:0,portion:'200g per side',closing:null,todayDeducted:0},
-  {id:14,name:'Mozzarella',cat:'Cheese',unit:'Kilo gram',qty:0,min:1,cost:0,retail:0,portion:'100g per pizza',closing:null,todayDeducted:0},
-  {id:15,name:'Pizza Sauce',cat:'Sauces',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'50ml per pizza',closing:null,todayDeducted:0},
-  {id:16,name:'Mushroom Sauce',cat:'Sauces',unit:'Liter',qty:0,min:0.5,cost:0,retail:0,portion:'80ml per dish',closing:null,todayDeducted:0},
-  {id:17,name:'Pepper Sauce',cat:'Sauces',unit:'Liter',qty:0,min:0.5,cost:0,retail:0,portion:'80ml per dish',closing:null,todayDeducted:0},
-  {id:18,name:'Peri Peri Sauce',cat:'Sauces',unit:'Liter',qty:0,min:0.5,cost:0,retail:0,portion:'50ml per dish',closing:null,todayDeducted:0},
-  {id:19,name:'Eggs',cat:'Dairy',unit:'Each',qty:0,min:12,cost:0,retail:0,portion:'2 per bun',closing:null,todayDeducted:0},
-  {id:21,name:'Condiments (Tomato, Lettuce, Onion)',cat:'Vegetables',unit:'Portion',qty:0,min:20,cost:0,retail:0,portion:'1 set per burger',closing:null,todayDeducted:0},
+  // BREAD
+  {id:1,name:'Burger Buns',cat:'Bread & Dough',unit:'Each',qty:0,min:20,cost:0,retail:0,portion:'1 per burger',closing:null,todayDeducted:0},
+  {id:2,name:'Portugese Rolls',cat:'Bread & Dough',unit:'Each',qty:0,min:10,cost:0,retail:0,portion:'1 per prego',closing:null,todayDeducted:0},
+  {id:3,name:'Hot Dog Rolls',cat:'Bread & Dough',unit:'Each',qty:0,min:10,cost:0,retail:0,portion:'1 per hot dog',closing:null,todayDeducted:0},
+  {id:4,name:'Wraps',cat:'Bread & Dough',unit:'Each',qty:0,min:8,cost:0,retail:0,portion:'1 per wrap',closing:null,todayDeducted:0},
+  {id:5,name:'Eggs',cat:'Dairy',unit:'Each',qty:0,min:12,cost:0,retail:0,portion:'2 per dish',closing:null,todayDeducted:0},
+  // PIZZA
+  {id:6,name:'Pizza Sauce',cat:'Sauces',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'50ml per pizza',closing:null,todayDeducted:0},
+  {id:7,name:'Pizza Base',cat:'Bread & Dough',unit:'Portion',qty:0,min:8,cost:0,retail:0,portion:'1 per pizza',closing:null,todayDeducted:0},
+  {id:8,name:'Pizza Bacon',cat:'Meat & Poultry',unit:'Portion',qty:0,min:5,cost:0,retail:0,portion:'1 portion',closing:null,todayDeducted:0},
+  {id:9,name:'Pizza Ribs',cat:'Pork',unit:'Portion',qty:0,min:5,cost:0,retail:0,portion:'1 portion',closing:null,todayDeducted:0},
+  {id:10,name:'Pizza Ham',cat:'Meat & Poultry',unit:'Portion',qty:0,min:5,cost:0,retail:0,portion:'1 portion',closing:null,todayDeducted:0},
+  {id:11,name:'Pizza Mince',cat:'Meat & Poultry',unit:'Portion',qty:0,min:5,cost:0,retail:0,portion:'1 portion',closing:null,todayDeducted:0},
+  {id:12,name:'Pizza Pepperoni',cat:'Meat & Poultry',unit:'Portion',qty:0,min:5,cost:0,retail:0,portion:'1 portion',closing:null,todayDeducted:0},
+  // MEAT
+  {id:13,name:'Beef Patties 200g',cat:'Meat & Poultry',unit:'Each',qty:0,min:20,cost:0,retail:0,portion:'1 per burger',closing:null,todayDeducted:0},
+  {id:14,name:'Boerewors 200g',cat:'Meat & Poultry',unit:'Each',qty:0,min:10,cost:0,retail:0,portion:'1 per portion',closing:null,todayDeducted:0},
+  {id:15,name:'Ribs 500g',cat:'Pork',unit:'Portion',qty:0,min:5,cost:0,retail:0,portion:'1 rack',closing:null,todayDeducted:0},
+  {id:16,name:'Beef Prego',cat:'Meat & Poultry',unit:'Each',qty:0,min:8,cost:0,retail:0,portion:'1 per prego',closing:null,todayDeducted:0},
+  {id:17,name:'Steak 300g',cat:'Meat & Poultry',unit:'Each',qty:0,min:5,cost:0,retail:0,portion:'1 per dish',closing:null,todayDeducted:0},
+  {id:18,name:'Bacon Slices',cat:'Meat & Poultry',unit:'Each',qty:0,min:20,cost:0,retail:0,portion:'2 per burger',closing:null,todayDeducted:0},
+  {id:19,name:'Cheese Slices',cat:'Cheese',unit:'Each',qty:0,min:30,cost:0,retail:0,portion:'1-2 per burger',closing:null,todayDeducted:0},
+  {id:20,name:'Cheese Grillers',cat:'Meat & Poultry',unit:'Portion (8)',qty:0,min:5,cost:0,retail:0,portion:'8 per portion',closing:null,todayDeducted:0},
+  {id:21,name:'Chicken Wings',cat:'Meat & Poultry',unit:'Portion (8)',qty:0,min:10,cost:0,retail:0,portion:'8 per portion',closing:null,todayDeducted:0},
+  {id:22,name:'Chicken Half',cat:'Meat & Poultry',unit:'Portion',qty:0,min:5,cost:0,retail:0,portion:'½ chicken',closing:null,todayDeducted:0},
+  {id:23,name:'Chicken Fillet',cat:'Meat & Poultry',unit:'Each',qty:0,min:10,cost:0,retail:0,portion:'1 per dish',closing:null,todayDeducted:0},
+  {id:24,name:'Chips Portioned',cat:'Frozen',unit:'Portion (100g)',qty:0,min:20,cost:0,retail:0,portion:'100g per side',closing:null,todayDeducted:0},
+  {id:25,name:'Mozzarella Portions',cat:'Cheese',unit:'Portion (150g)',qty:0,min:5,cost:0,retail:0,portion:'150g per pizza',closing:null,todayDeducted:0},
+  // SAUCES
+  {id:26,name:'BBQ Sauce',cat:'Sauces',unit:'Liter',qty:0,min:2,cost:0,retail:0,portion:'30ml per dish',closing:null,todayDeducted:0},
+  {id:27,name:'Mushroom Sauce',cat:'Sauces',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'80ml per dish',closing:null,todayDeducted:0},
+  {id:28,name:'Peri Peri Sauce',cat:'Sauces',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'50ml per dish',closing:null,todayDeducted:0},
+  {id:29,name:'Prego Sauce',cat:'Sauces',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'50ml per prego',closing:null,todayDeducted:0},
+  {id:30,name:'Lemon and Herb Sauce',cat:'Sauces',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'50ml per dish',closing:null,todayDeducted:0},
+  {id:31,name:'Sweet Chilli Mayo',cat:'Sauces',unit:'Liter',qty:0,min:0.5,cost:0,retail:0,portion:'30ml per dish',closing:null,todayDeducted:0},
+  {id:32,name:'Sweet Chilli Sauce',cat:'Sauces',unit:'Liter',qty:0,min:0.5,cost:0,retail:0,portion:'30ml per dish',closing:null,todayDeducted:0},
+  {id:33,name:'Lemon Juice',cat:'Sauces',unit:'Liter',qty:0,min:0.5,cost:0,retail:0,portion:'10ml per dish',closing:null,todayDeducted:0},
+  {id:34,name:'Mayonnaise',cat:'Condiments',unit:'kg',qty:0,min:1,cost:0,retail:0,portion:'20g per portion',closing:null,todayDeducted:0},
+  // BULK
+  {id:35,name:'Chips Bulk',cat:'Frozen',unit:'kg',qty:0,min:5,cost:0,retail:0,portion:'200g per side',closing:null,todayDeducted:0},
+  {id:36,name:'Wings Bulk',cat:'Meat & Poultry',unit:'kg',qty:0,min:2,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:37,name:'Ribs Bulk',cat:'Pork',unit:'kg',qty:0,min:2,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:38,name:'Pepperoni Bulk',cat:'Meat & Poultry',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:39,name:'Cheese Griller Bulk',cat:'Meat & Poultry',unit:'kg',qty:0,min:1,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:40,name:'Bacon Cubs Bulk',cat:'Meat & Poultry',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:41,name:'Bacon Slices Bulk',cat:'Meat & Poultry',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:42,name:'Ham Bulk',cat:'Meat & Poultry',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:43,name:'Ham Slices',cat:'Meat & Poultry',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:44,name:'Mozzarella Bulk',cat:'Cheese',unit:'kg',qty:0,min:1,cost:0,retail:0,portion:'100g per pizza',closing:null,todayDeducted:0},
+  {id:45,name:'Milk',cat:'Dairy',unit:'Liter',qty:0,min:2,cost:0,retail:0,portion:'per liter',closing:null,todayDeducted:0},
+  {id:46,name:'Cream',cat:'Dairy',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'per liter',closing:null,todayDeducted:0},
+  {id:47,name:'Feta Bulk',cat:'Cheese',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:48,name:'Crushed Garlic',cat:'Herbs & Spices',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:49,name:'Oil Bulk',cat:'Other',unit:'Liter',qty:0,min:2,cost:0,retail:0,portion:'per liter',closing:null,todayDeducted:0},
+  {id:50,name:'Black Olives Sliced',cat:'Other',unit:'kg',qty:0,min:0.2,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:51,name:'Kalamata Olives',cat:'Other',unit:'kg',qty:0,min:0.2,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:52,name:'Olive Oil',cat:'Other',unit:'Liter',qty:0,min:0.5,cost:0,retail:0,portion:'per liter',closing:null,todayDeducted:0},
+  // STAFF MEALS & DRY GOODS
+  {id:53,name:'Maize Meal',cat:'Dry Goods',unit:'kg',qty:0,min:5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:54,name:'Rice',cat:'Dry Goods',unit:'kg',qty:0,min:2,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:55,name:'Staff Chicken',cat:'Meat & Poultry',unit:'Each (3-piece)',qty:0,min:5,cost:0,retail:0,portion:'3 pieces',closing:null,todayDeducted:0},
+  {id:56,name:'Flour',cat:'Dry Goods',unit:'kg',qty:0,min:5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:57,name:'Tomato Sauce',cat:'Sauces',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'per liter',closing:null,todayDeducted:0},
+  {id:58,name:'Sugar',cat:'Dry Goods',unit:'kg',qty:0,min:1,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:59,name:'Butter',cat:'Dairy',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:60,name:'Whole Peeled Tomatoes',cat:'Vegetables',unit:'kg',qty:0,min:1,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:61,name:'Halloumi Cheese',cat:'Cheese',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:62,name:'Tomato and Onion Mix',cat:'Vegetables',unit:'kg',qty:0,min:1,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:63,name:'Condiments (Tomato, Lettuce, Onion)',cat:'Vegetables',unit:'Portion',qty:0,min:20,cost:0,retail:0,portion:'1 set per burger',closing:null,todayDeducted:0},
+  {id:64,name:'Pineapple',cat:'Vegetables',unit:'Each',qty:0,min:2,cost:0,retail:0,portion:'per tin',closing:null,todayDeducted:0},
+  // SPICES
+  {id:65,name:'Paprika',cat:'Herbs & Spices',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:66,name:'Portuguese Spice - Steak',cat:'Herbs & Spices',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:67,name:'Portuguese Spice - Chicken',cat:'Herbs & Spices',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:68,name:'Origanum',cat:'Herbs & Spices',unit:'kg',qty:0,min:0.2,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:69,name:'Chip Spice',cat:'Herbs & Spices',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:70,name:'Chilli Powder',cat:'Herbs & Spices',unit:'kg',qty:0,min:0.2,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:71,name:'Fine Salt',cat:'Herbs & Spices',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:72,name:'Aromat',cat:'Herbs & Spices',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:73,name:'BBQ Spice',cat:'Herbs & Spices',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:74,name:'Black Pepper',cat:'Herbs & Spices',unit:'kg',qty:0,min:0.2,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:75,name:'Yeast Packets 10g',cat:'Dry Goods',unit:'Each',qty:0,min:10,cost:0,retail:0,portion:'1 per batch',closing:null,todayDeducted:0},
+  {id:76,name:'Spray and Cook',cat:'Other',unit:'Each',qty:0,min:1,cost:0,retail:0,portion:'per can',closing:null,todayDeducted:0},
+  {id:77,name:'Core Salt',cat:'Herbs & Spices',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
+  {id:78,name:'Kitchen Wine',cat:'Other',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'per liter',closing:null,todayDeducted:0},
 ];}
 
 // ═══════════════════════════════════════════════
