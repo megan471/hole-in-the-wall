@@ -866,7 +866,12 @@ tr:hover td{background:var(--surface2);}
         <div id="reg-msg" style="margin-top:5px"></div>
       </div>
       <div id="pass-msg" style="margin-top:5px"></div>
-      <div class="card"><h3>🗑️ Danger Zone</h3><button class="btn-sm btn-danger" onclick="clearAllData()">⚠️ Clear All Data</button></div>
+      <div class="card"><h3>🗑️ Danger Zone</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-sm btn-accent" onclick="resetKitchenStockDefaults()" style="border-color:var(--blue);color:var(--blue)">🥩 Reset Kitchen Stock to Full List (78 items)</button>
+          <button class="btn-sm btn-danger" onclick="clearAllData()">⚠️ Clear All Data</button>
+        </div>
+      </div>
     </div>
 
   </div><!-- /content -->
@@ -935,7 +940,20 @@ function reloadDataVars(){
   cashups=load('hitw_cashups',[]);tipsData=load('hitw_tips',[]);reconData=load('hitw_recon',[]);
   orders=load('hitw_orders',[]);menuItems=load('hitw_menu',defaultMenu());
   barStock=load('hitw_barstock',defaultBarStock());backStock=load('hitw_backstock',[]);
-  transferLog=load('hitw_transfers',[]);kitchenStock=load('hitw_kstock',defaultKitStock());
+  transferLog=load('hitw_transfers',[]);
+  // Load kitchen stock and merge any new default items not yet in saved list
+  const _savedKit=load('hitw_kstock',null);
+  if(!_savedKit){kitchenStock=defaultKitStock();}
+  else{
+    kitchenStock=_savedKit;
+    const _defKit=defaultKitStock();
+    let _added=0;
+    _defKit.forEach(defItem=>{
+      const exists=kitchenStock.some(s=>s.name.toLowerCase().trim()===defItem.name.toLowerCase().trim());
+      if(!exists){kitchenStock.push({...defItem,id:Date.now()+Math.random(),qty:0});_added++;}
+    });
+    if(_added>0){save('hitw_kstock',kitchenStock);console.log('Added '+_added+' new kitchen stock items');}
+  }
   bulkStock=load('hitw_bulkstock',[]);promoLog=load('hitw_promo',[]);
   unpaidTables=load('hitw_unpaid',[]);waiterTipsLog=load('hitw_waitertips',[]);
   recipes=load('hitw_recipes',{});stockLog=load('hitw_stocklog',[]);
@@ -1702,11 +1720,117 @@ function renderBankTransactions(){
 function handleStockPhotoDrop(e,type){e.preventDefault();e.stopPropagation();const file=e.dataTransfer.files[0];if(file)processStockPhoto(file,type);}
 function handleStockPhoto(e,type){const file=e.target.files[0];if(file){e.target.value='';processStockPhoto(file,type);}}
 
+// Parse plain-text stock sheets (stock takes, delivery notes in text format)
+function parseStockText(text){
+  const items=[];
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l.length>1);
+  // Section headers to skip
+  const skipWords=['BREAD','PIZZA','MEAT','SAUCES','BULK','SPICES','CLEANING','STAFF','ITEM','UNIT','QTY','NAME','PRODUCTS','MEALS'];
+  
+  lines.forEach(line=>{
+    // Skip pure section headers (all caps, no numbers)
+    const upper=line.toUpperCase();
+    if(skipWords.some(w=>upper===w||upper.startsWith(w+' PRODUCTS')||upper.startsWith(w+' MEALS')))return;
+    if(line.match(/^[A-Z\s&]+$/)&&line.length<30&&!line.match(/\d/))return;
+    
+    // Try to extract: name ... qty [unit]
+    // Patterns: "Burger Buns Each 35" or "Chips Bulk kg 22.5" or "Maize Meal 12.5kg 3"
+    
+    // Match lines with a number at the end (possibly fractional like "1/2")
+    const m=line.match(/^(.+?)\s+([\d]+(?:\.\d+)?(?:\/\d+)?)\s*$/);
+    if(m){
+      let name=m[1].trim();
+      let qtyStr=m[2];
+      
+      // Handle fractions
+      if(qtyStr.includes('/')){const[a,b]=qtyStr.split('/');qtyStr=String(parseFloat(a)/parseFloat(b));}
+      const qty=parseFloat(qtyStr)||0;
+      
+      // Extract unit if last word of name looks like a unit
+      const unitWords=['each','kg','liter','litre','l','ml','roll','box','boxes','pack','portions','portion','each','g','gram'];
+      const nameParts=name.split(/\s+/);
+      let unit='Each';
+      // Check if last 1-2 words are a unit or size like "1L", "5kg", "12.5kg"
+      const lastWord=nameParts[nameParts.length-1]?.toLowerCase()||'';
+      const secondLast=nameParts[nameParts.length-2]?.toLowerCase()||'';
+      
+      if(unitWords.includes(lastWord)||lastWord.match(/^\d+(\.\d+)?(kg|l|ml|g)$/i)){
+        unit=nameParts.pop();
+        name=nameParts.join(' ');
+      }else if(lastWord.match(/^\d+$/)&&unitWords.includes(secondLast)){
+        // e.g. "Portions 8" at end
+        unit=nameParts.slice(-2).join(' ');
+        name=nameParts.slice(0,-2).join(' ');
+      }
+      
+      // Clean up name - remove trailing size descriptors that are part of the product
+      name=name.replace(/\s+\d+(\.\d+)?(kg|L|ml|g)\s*$/i,'').trim();
+      
+      if(name.length>1&&name.length<80&&qty>=0){
+        items.push({name,qty,pack:unit});
+      }
+      return;
+    }
+    
+    // Try lines with unit in the middle: "Burger Buns Each 35"
+    const m2=line.match(/^(.+?)\s+(Each|kg|Liter|Litre|Portion|Portions|Roll|Box|Pack|Each)\s+([\d.\/]+)\s*$/i);
+    if(m2){
+      const name=m2[1].trim();const unit=m2[2];let qtyStr=m2[3];
+      if(qtyStr.includes('/')){const[a,b]=qtyStr.split('/');qtyStr=String(parseFloat(a)/parseFloat(b));}
+      const qty=parseFloat(qtyStr)||0;
+      if(name.length>1)items.push({name,qty,pack:unit});
+    }
+  });
+  
+  // Deduplicate by name
+  const seen=new Set();
+  return items.filter(i=>{const k=i.name.toLowerCase().trim();if(seen.has(k))return false;seen.add(k);return true;});
+}
+
 async function processStockPhoto(file,type){
   const resultEl=document.getElementById(type==='bar'?'bar-photo-result':'kitchen-photo-result');
-  if(resultEl)resultEl.innerHTML=`<div class="alert alert-info" style="display:flex;align-items:center;gap:8px"><div style="width:14px;height:14px;border:2px solid var(--blue);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite"></div>🤖 AI is reading the invoice…</div>`;
+  if(resultEl)resultEl.innerHTML=`<div class="alert alert-info" style="display:flex;align-items:center;gap:8px"><div style="width:14px;height:14px;border:2px solid var(--blue);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite"></div>Reading file…</div>`;
 
   try{
+    const isImage=file.type.startsWith('image/');
+    const isPDF=file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf');
+
+    if(!isImage&&!isPDF){
+      throw new Error('Please upload an image (JPG, PNG) or PDF.');
+    }
+
+    // For PDFs: try reading as text first (works for text-based PDFs like stock sheets)
+    if(isPDF){
+      const textContent=await new Promise(res=>{
+        const r=new FileReader();
+        r.onload=e=>{
+          const txt=e.target.result||'';
+          // Check if it contains readable text (not binary garbage)
+          const readable=txt.replace(/[\x00-\x08\x0e-\x1f\x7f-\x9f]/g,'');
+          const printable=readable.replace(/[^\x20-\x7e\n\r\t]/g,'');
+          res(printable.length>100?printable:null);
+        };
+        r.onerror=()=>res(null);
+        r.readAsText(file);
+      });
+
+      if(textContent){
+        // Successfully read as text - parse directly without API
+        if(resultEl)resultEl.innerHTML=`<div class="alert alert-info">📄 Parsing text PDF directly…</div>`;
+        const items=parseStockText(textContent);
+        if(items.length>0){
+          if(type==='bar')barDeliveryItems=items;else kitchenDeliveryItems=items;
+          renderDeliveryList(type);
+          if(resultEl)resultEl.innerHTML=`<div class="alert alert-success">✅ Read <strong>${items.length} items</strong> from ${file.name} — review below then click Apply</div>`;
+          return;
+        }
+        // Text parse got nothing useful - fall through to AI
+      }
+    }
+
+    // For images, or PDFs that couldn't be read as text: use AI API
+    if(resultEl)resultEl.innerHTML=`<div class="alert alert-info" style="display:flex;align-items:center;gap:8px"><div style="width:14px;height:14px;border:2px solid var(--blue);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite"></div>🤖 Sending to AI…</div>`;
+
     const base64=await new Promise((res,rej)=>{
       const r=new FileReader();
       r.onload=()=>{
@@ -1718,13 +1842,10 @@ async function processStockPhoto(file,type){
       r.readAsDataURL(file);
     });
 
-    const isImage=file.type.startsWith('image/');
-    const isPDF=file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf');
-
+    // Only needed below
     if(!isImage&&!isPDF){
       throw new Error('Please upload an image (JPG, PNG) or PDF of the invoice/delivery note.');
     }
-
     const mediaType=isImage?file.type:'application/pdf';
     const blockType=isImage?'image':'document';
 
@@ -2901,6 +3022,17 @@ function addRegular(){
   ['reg-name','reg-disc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
 }
 function deleteRegular(id){regulars=regulars.filter(r=>r.id!==id);persist();renderRegularsSettings();renderRegularsGrid();}
+function resetKitchenStockDefaults(){
+  if(!confirm('This will ADD all 78 default kitchen stock items (preserving your existing items and their quantities). Proceed?'))return;
+  const defKit=defaultKitStock();
+  let added=0;
+  defKit.forEach(defItem=>{
+    const exists=kitchenStock.some(s=>s.name.toLowerCase().trim()===defItem.name.toLowerCase().trim());
+    if(!exists){kitchenStock.push({...defItem,id:Date.now()+Math.random(),qty:0});added++;}
+  });
+  persist();renderKitchenStock();
+  alert(added>0?`✅ Added ${added} new items to Kitchen Stock. Your existing items were kept.`:'All default items are already in your Kitchen Stock.');
+}
 function clearAllData(){if(!confirm('⚠️ This will DELETE all data. Sure?'))return;if(!confirm('Really? This cannot be undone.'))return;['hitw_pw','hitw_staff','hitw_regulars','hitw_cashups','hitw_tips','hitw_recon','hitw_orders','hitw_menu','hitw_barstock','hitw_backstock','hitw_transfers','hitw_kstock','hitw_bulkstock','hitw_promo','hitw_unpaid','hitw_waitertips','hitw_recipes','hitw_stocklog'].forEach(k=>localStorage.removeItem(k));location.reload();}
 
 // ═══════════════════════════════════════════════
