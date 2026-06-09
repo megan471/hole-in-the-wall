@@ -868,7 +868,10 @@ tr:hover td{background:var(--surface2);}
       <div id="pass-msg" style="margin-top:5px"></div>
       <div class="card"><h3>🗑️ Danger Zone</h3>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn-sm btn-accent" onclick="resetKitchenStockDefaults()" style="border-color:var(--blue);color:var(--blue)">🥩 Reset Kitchen Stock to Full List (78 items)</button>
+          <button class="btn-sm btn-accent" onclick="resetBarStockDefaults()" style="border-color:var(--accent);color:var(--accent)">🍺 Reset Bar Stock (154 items)</button>
+          <button class="btn-sm btn-accent" onclick="resetBackStockDefaults()" style="border-color:var(--orange);color:var(--orange)">📦 Reset Back Stock (149 items)</button>
+          <button class="btn-sm btn-accent" onclick="resetKitchenStockDefaults()" style="border-color:var(--blue);color:var(--blue)">🥩 Reset Kitchen Stock</button>
+          <button class="btn-sm btn-accent" onclick="resetBulkStockDefaults()" style="border-color:var(--purple);color:var(--purple)">🪣 Reset Bulk Stock (29 items)</button>
           <button class="btn-sm btn-danger" onclick="clearAllData()">⚠️ Clear All Data</button>
         </div>
       </div>
@@ -939,7 +942,9 @@ function reloadDataVars(){
   regulars=load('hitw_regulars',defaultRegulars());
   cashups=load('hitw_cashups',[]);tipsData=load('hitw_tips',[]);reconData=load('hitw_recon',[]);
   orders=load('hitw_orders',[]);menuItems=load('hitw_menu',defaultMenu());
-  barStock=load('hitw_barstock',defaultBarStock());backStock=load('hitw_backstock',[]);
+  const _savedBar=load('hitw_barstock',null);
+  if(!_savedBar){barStock=defaultBarStock();}
+  else{barStock=_savedBar;const _defBar=defaultBarStock();let _ab2=0;_defBar.forEach(d=>{const ex=barStock.some(s=>s.name.toLowerCase().trim()===d.name.toLowerCase().trim());if(!ex){barStock.push({...d,id:Date.now()+Math.random()});_ab2++;}});if(_ab2>0)save('hitw_barstock',barStock);}backStock=load('hitw_backstock',defaultBackStock());
   transferLog=load('hitw_transfers',[]);
   // Load kitchen stock and merge any new default items not yet in saved list
   const _savedKit=load('hitw_kstock',null);
@@ -954,7 +959,7 @@ function reloadDataVars(){
     });
     if(_added>0){save('hitw_kstock',kitchenStock);console.log('Added '+_added+' new kitchen stock items');}
   }
-  bulkStock=load('hitw_bulkstock',[]);promoLog=load('hitw_promo',[]);
+  bulkStock=load('hitw_bulkstock',defaultBulkStock());promoLog=load('hitw_promo',[]);
   unpaidTables=load('hitw_unpaid',[]);waiterTipsLog=load('hitw_waitertips',[]);
   recipes=load('hitw_recipes',{});stockLog=load('hitw_stocklog',[]);
 }
@@ -967,7 +972,7 @@ function setupRealtimeListeners(){
     'hitw_unpaid':()=>{unpaidTables=load('hitw_unpaid',[]);renderDashboard&&renderDashboard();},
     'hitw_barstock':()=>{barStock=load('hitw_barstock',defaultBarStock());},
     'hitw_kstock':()=>{kitchenStock=load('hitw_kstock',defaultKitStock());},
-    'hitw_bulkstock':()=>{bulkStock=load('hitw_bulkstock',[]);},
+    'hitw_bulkstock':()=>{bulkStock=load('hitw_bulkstock',defaultBulkStock());},
   };
   Object.entries(w).forEach(([k,fn])=>{window._fbOnValue(window._fbRef(fbDatabase,'hitw/'+k),(snap)=>{if(snap.exists()){localStorage.setItem(k,JSON.stringify(snap.val()));fn();}});});
 }
@@ -987,9 +992,9 @@ let orders=load('hitw_orders',[]);
 let promoLog=load('hitw_promo',[]);
 let unpaidTables=load('hitw_unpaid',[]);
 let waiterTipsLog=load('hitw_waitertips',[]);
-let backStock=load('hitw_backstock',[]);
+let backStock=load('hitw_backstock',defaultBackStock());
 let transferLog=load('hitw_transfers',[]);
-let bulkStock=load('hitw_bulkstock',[]);
+let bulkStock=load('hitw_bulkstock',defaultBulkStock());
 let recipes=load('hitw_recipes',{});
 let stockLog=load('hitw_stocklog',[]);
 
@@ -3022,6 +3027,27 @@ function addRegular(){
   ['reg-name','reg-disc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
 }
 function deleteRegular(id){regulars=regulars.filter(r=>r.id!==id);persist();renderRegularsSettings();renderRegularsGrid();}
+function resetBackStockDefaults(){
+  if(!confirm('This will ADD all 149 default back stock items (preserving existing). Proceed?'))return;
+  const def=defaultBackStock();let added=0;
+  def.forEach(d=>{const ex=backStock.some(s=>s.name.toLowerCase().trim()===d.name.toLowerCase().trim());if(!ex){backStock.push({...d,id:Date.now()+Math.random()});added++;}});
+  persist();renderBackStock();populateTransferSelect();
+  alert(added>0?'✅ Added '+added+' new back stock items.':'All back stock defaults already exist.');
+}
+function resetBarStockDefaults(){
+  if(!confirm('This will ADD all 154 default bar stock items (preserving existing items and quantities). Proceed?'))return;
+  const def=defaultBarStock();let added=0;
+  def.forEach(d=>{const ex=barStock.some(s=>s.name.toLowerCase().trim()===d.name.toLowerCase().trim());if(!ex){barStock.push({...d,id:Date.now()+Math.random()});added++;}});
+  persist();renderBarStock();
+  alert(added>0?'✅ Added '+added+' new bar stock items. Existing items kept.':'All default bar items already exist.');
+}
+function resetBulkStockDefaults(){
+  if(!confirm('This will ADD all 29 default bulk stock items (preserving existing). Proceed?'))return;
+  const def=defaultBulkStock();let added=0;
+  def.forEach(d=>{const ex=bulkStock.some(s=>s.name.toLowerCase().trim()===d.name.toLowerCase().trim());if(!ex){bulkStock.push({...d,id:Date.now()+Math.random()});added++;}});
+  persist();renderBulkStock();
+  alert(added>0?'✅ Added '+added+' new bulk items.':'All bulk defaults already exist.');
+}
 function resetKitchenStockDefaults(){
   if(!confirm('This will ADD all 78 default kitchen stock items (preserving your existing items and their quantities). Proceed?'))return;
   const defKit=defaultKitStock();
@@ -3104,51 +3130,346 @@ function defaultMenu(){return[
   {id:63,name:'Juice (250ml)',price:30,cat:'Soft Drinks',route:'bar'},
 ];}
 
+function defaultBackStock(){return[
+  // SPIRITS - BRANDY & WHISKY
+  {id:1,name:'Buffelsfontein',cat:'Spirits',unit:'Tot (25ml)',qty:210,min:30,cost:0,closing:null},
+  {id:2,name:'Caramel Brandy',cat:'Spirits',unit:'Tot (25ml)',qty:120,min:30,cost:0,closing:null},
+  {id:3,name:'Klipdrift Brandy',cat:'Spirits',unit:'Tot (25ml)',qty:270,min:60,cost:0,closing:null},
+  {id:4,name:'Klipdrift Premium',cat:'Spirits',unit:'Tot (25ml)',qty:60,min:20,cost:0,closing:null},
+  {id:5,name:'Klipdrift Copper Ryl',cat:'Spirits',unit:'Tot (25ml)',qty:90,min:15,cost:0,closing:null},
+  {id:6,name:'Richelieu',cat:'Spirits',unit:'Tot (25ml)',qty:600,min:60,cost:0,closing:null},
+  {id:7,name:'Bells',cat:'Spirits',unit:'Tot (25ml)',qty:60,min:20,cost:0,closing:null},
+  {id:8,name:'J&B',cat:'Spirits',unit:'Tot (25ml)',qty:90,min:20,cost:0,closing:null},
+  {id:9,name:'Jack Daniels',cat:'Spirits',unit:'Tot (25ml)',qty:90,min:20,cost:0,closing:null},
+  {id:10,name:'Jameson',cat:'Spirits',unit:'Tot (25ml)',qty:150,min:30,cost:0,closing:null},
+  {id:11,name:'Jameson Select Res',cat:'Spirits',unit:'Tot (25ml)',qty:120,min:20,cost:0,closing:null},
+  {id:12,name:'Johnnie Walker Black',cat:'Spirits',unit:'Tot (25ml)',qty:60,min:15,cost:0,closing:null},
+  {id:13,name:'Johnnie Walker Red',cat:'Spirits',unit:'Tot (25ml)',qty:60,min:20,cost:0,closing:null},
+  {id:14,name:'Johnny Walker Double Black',cat:'Spirits',unit:'Tot (25ml)',qty:0,min:10,cost:0,closing:null},
+  {id:15,name:'Three Ships 3Yrs',cat:'Spirits',unit:'Tot (25ml)',qty:60,min:15,cost:0,closing:null},
+  // SPIRITS - GIN
+  {id:16,name:'Belgravia',cat:'Spirits',unit:'Tot (25ml)',qty:240,min:60,cost:0,closing:null},
+  {id:17,name:'Gordons',cat:'Spirits',unit:'Tot (25ml)',qty:120,min:30,cost:0,closing:null},
+  {id:18,name:'Grey Goose',cat:'Spirits',unit:'Tot (25ml)',qty:60,min:15,cost:0,closing:null},
+  {id:19,name:'Tanqueray',cat:'Spirits',unit:'Tot (25ml)',qty:90,min:20,cost:0,closing:null},
+  // SPIRITS - VODKA
+  {id:20,name:'Absolut',cat:'Spirits',unit:'Tot (25ml)',qty:90,min:20,cost:0,closing:null},
+  {id:21,name:'Red Square Vodka',cat:'Spirits',unit:'Tot (25ml)',qty:660,min:60,cost:0,closing:null},
+  {id:22,name:'Skyy',cat:'Spirits',unit:'Tot (25ml)',qty:30,min:15,cost:0,closing:null},
+  {id:23,name:'Smirnoff 1818',cat:'Spirits',unit:'Tot (25ml)',qty:90,min:20,cost:0,closing:null},
+  // SPIRITS - RUM
+  {id:24,name:'Bacardi',cat:'Spirits',unit:'Tot (25ml)',qty:30,min:15,cost:0,closing:null},
+  {id:25,name:'Captain Morgan Dark',cat:'Spirits',unit:'Tot (25ml)',qty:210,min:30,cost:0,closing:null},
+  {id:26,name:'Captain Morgan Spiced',cat:'Spirits',unit:'Tot (25ml)',qty:150,min:30,cost:0,closing:null},
+  {id:27,name:'Malibu',cat:'Spirits',unit:'Tot (25ml)',qty:120,min:15,cost:0,closing:null},
+  {id:28,name:'Red Heart',cat:'Spirits',unit:'Tot (25ml)',qty:30,min:15,cost:0,closing:null},
+  // SPIRITS - TEQUILA
+  {id:29,name:'Don Julio Blanco',cat:'Spirits',unit:'Tot (25ml)',qty:60,min:10,cost:0,closing:null},
+  {id:30,name:'Don Julio Reposado',cat:'Spirits',unit:'Tot (25ml)',qty:120,min:10,cost:0,closing:null},
+  {id:31,name:'Jose Cuervo Gold',cat:'Spirits',unit:'Tot (25ml)',qty:810,min:60,cost:0,closing:null},
+  {id:32,name:'Jose Cuervo Silver',cat:'Spirits',unit:'Tot (25ml)',qty:210,min:30,cost:0,closing:null},
+  // SPIRITS - OTHER
+  {id:33,name:'Amarula Cream',cat:'Spirits',unit:'Tot (25ml)',qty:90,min:15,cost:0,closing:null},
+  {id:34,name:'Coco Rico',cat:'Spirits',unit:'Tot (25ml)',qty:0,min:5,cost:0,closing:null},
+  {id:35,name:'Coffee Toffee',cat:'Spirits',unit:'Tot (25ml)',qty:90,min:15,cost:0,closing:null},
+  {id:36,name:'Hennesy',cat:'Spirits',unit:'Tot (25ml)',qty:60,min:10,cost:0,closing:null},
+  {id:37,name:'Kahlua',cat:'Spirits',unit:'Tot (25ml)',qty:60,min:10,cost:0,closing:null},
+  {id:38,name:'Obs',cat:'Spirits',unit:'Tot (25ml)',qty:0,min:10,cost:0,closing:null},
+  {id:39,name:'Oester Poester',cat:'Spirits',unit:'Tot (25ml)',qty:0,min:10,cost:0,closing:null},
+  {id:40,name:'P10C',cat:'Spirits',unit:'Tot (25ml)',qty:90,min:15,cost:0,closing:null},
+  {id:41,name:'Southern Comfort',cat:'Spirits',unit:'Tot (25ml)',qty:30,min:15,cost:0,closing:null},
+  {id:42,name:'Tipo Tinto',cat:'Spirits',unit:'Tot (25ml)',qty:180,min:30,cost:0,closing:null},
+  // SHOTS
+  {id:43,name:'Butlers Blue',cat:'Shots',unit:'Tot (25ml)',qty:30,min:20,cost:0,closing:null},
+  {id:44,name:'Butlers Peppermint',cat:'Shots',unit:'Tot (25ml)',qty:60,min:20,cost:0,closing:null},
+  {id:45,name:'Butlers Strawberry',cat:'Shots',unit:'Tot (25ml)',qty:0,min:20,cost:0,closing:null},
+  {id:46,name:'Cordial Kola Tonic',cat:'Shots',unit:'Tot (25ml)',qty:90,min:15,cost:0,closing:null},
+  {id:47,name:'Cordial Lime',cat:'Shots',unit:'Tot (25ml)',qty:90,min:15,cost:0,closing:null},
+  {id:48,name:'Cordial Passion Fruit',cat:'Shots',unit:'Tot (25ml)',qty:90,min:15,cost:0,closing:null},
+  {id:49,name:'Fireball',cat:'Shots',unit:'Tot (25ml)',qty:30,min:15,cost:0,closing:null},
+  {id:50,name:'Global Waters',cat:'Shots',unit:'Tot (25ml)',qty:600,min:30,cost:0,closing:null},
+  {id:51,name:'Jagmeister',cat:'Shots',unit:'Tot (25ml)',qty:630,min:60,cost:0,closing:null},
+  {id:52,name:'Jagermeister Orange',cat:'Shots',unit:'Tot (25ml)',qty:0,min:10,cost:0,closing:null},
+  {id:53,name:'Strawberry Lips',cat:'Shots',unit:'Tot (25ml)',qty:60,min:20,cost:0,closing:null},
+  {id:54,name:'Tang Apple',cat:'Shots',unit:'Tot (25ml)',qty:30,min:15,cost:0,closing:null},
+  {id:55,name:'Tang Cherry',cat:'Shots',unit:'Tot (25ml)',qty:60,min:15,cost:0,closing:null},
+  // BEER - DRAUGHT
+  {id:56,name:'Black Label Draught',cat:'Beer',unit:'Liter',qty:100,min:20,cost:0,closing:null},
+  {id:57,name:'Castle Lite Draught',cat:'Beer',unit:'Liter',qty:100,min:20,cost:0,closing:null},
+  {id:58,name:'Stella Artois Draught',cat:'Beer',unit:'Liter',qty:90,min:10,cost:0,closing:null},
+  // BEER - BOTTLES
+  {id:59,name:'Amstel Dumpies',cat:'Beer',unit:'Each',qty:12,min:12,cost:0,closing:null},
+  {id:60,name:'Amstel Lager 660ml',cat:'Beer',unit:'Each',qty:12,min:6,cost:0,closing:null},
+  {id:61,name:'Black Label Dumpie',cat:'Beer',unit:'Each',qty:24,min:24,cost:0,closing:null},
+  {id:62,name:'Black Label Quartz',cat:'Beer',unit:'Each',qty:12,min:12,cost:0,closing:null},
+  {id:63,name:'Castle Free',cat:'Beer',unit:'Each',qty:0,min:6,cost:0,closing:null},
+  {id:64,name:'Castle Lager 750ml',cat:'Beer',unit:'Each',qty:36,min:12,cost:0,closing:null},
+  {id:65,name:'Castle Lager Double Malt 330ml',cat:'Beer',unit:'Each',qty:0,min:6,cost:0,closing:null},
+  {id:66,name:'Castle Lite Dumpie',cat:'Beer',unit:'Each',qty:60,min:24,cost:0,closing:null},
+  {id:67,name:'Castle Lite Quarts',cat:'Beer',unit:'Each',qty:24,min:12,cost:0,closing:null},
+  {id:68,name:'Castle Milk Stout',cat:'Beer',unit:'Each',qty:6,min:6,cost:0,closing:null},
+  {id:69,name:'Corona',cat:'Beer',unit:'Each',qty:42,min:12,cost:0,closing:null},
+  {id:70,name:'Corona Zero',cat:'Beer',unit:'Each',qty:48,min:12,cost:0,closing:null},
+  {id:71,name:'Flying Fish 660ml',cat:'Beer',unit:'Each',qty:12,min:6,cost:0,closing:null},
+  {id:72,name:'Flying Fish Apple',cat:'Beer',unit:'Each',qty:0,min:6,cost:0,closing:null},
+  {id:73,name:'Flying Fish Lemon',cat:'Beer',unit:'Each',qty:36,min:12,cost:0,closing:null},
+  {id:74,name:'Guinness Draught',cat:'Beer',unit:'Each',qty:120,min:12,cost:0,closing:null},
+  {id:75,name:'Hansa Dumpies',cat:'Beer',unit:'Each',qty:6,min:6,cost:0,closing:null},
+  {id:76,name:'Hansa Pilsner 750ml',cat:'Beer',unit:'Each',qty:12,min:6,cost:0,closing:null},
+  {id:77,name:'Heineken',cat:'Beer',unit:'Each',qty:48,min:12,cost:0,closing:null},
+  {id:78,name:'Heineken 650ml',cat:'Beer',unit:'Each',qty:24,min:12,cost:0,closing:null},
+  {id:79,name:'Heineken Silver',cat:'Beer',unit:'Each',qty:6,min:6,cost:0,closing:null},
+  {id:80,name:'Heineken Zero',cat:'Beer',unit:'Each',qty:24,min:12,cost:0,closing:null},
+  {id:81,name:'Sol Cerveza',cat:'Beer',unit:'Each',qty:0,min:6,cost:0,closing:null},
+  {id:82,name:'Stella Artois',cat:'Beer',unit:'Each',qty:0,min:6,cost:0,closing:null},
+  {id:83,name:'Tafel Lager',cat:'Beer',unit:'Each',qty:6,min:6,cost:0,closing:null},
+  {id:84,name:'Windhoek Draught',cat:'Beer',unit:'Each',qty:66,min:12,cost:0,closing:null},
+  {id:85,name:'Windhoek Draught 660ml',cat:'Beer',unit:'Each',qty:0,min:12,cost:0,closing:null},
+  {id:86,name:'Windhoek Lager',cat:'Beer',unit:'Each',qty:78,min:12,cost:0,closing:null},
+  {id:87,name:'Windhoek Lager 660ml',cat:'Beer',unit:'Each',qty:12,min:6,cost:0,closing:null},
+  // CIDER & RTD
+  {id:88,name:'Belgravia DarkCherry',cat:'Cider',unit:'Each',qty:24,min:12,cost:0,closing:null},
+  {id:89,name:'Belgravia G&Dry Lemon',cat:'Cider',unit:'Each',qty:0,min:12,cost:0,closing:null},
+  {id:90,name:'Belgravia G&T 275ml',cat:'Cider',unit:'Each',qty:24,min:12,cost:0,closing:null},
+  {id:91,name:'Belgravia Peach',cat:'Cider',unit:'Each',qty:30,min:12,cost:0,closing:null},
+  {id:92,name:'Bernini Blush 275ml',cat:'Cider',unit:'Each',qty:42,min:12,cost:0,closing:null},
+  {id:93,name:'Bernini Classic 275ml',cat:'Cider',unit:'Each',qty:24,min:12,cost:0,closing:null},
+  {id:94,name:'Black Crown G&T 275ml',cat:'Cider',unit:'Each',qty:0,min:6,cost:0,closing:null},
+  {id:95,name:'Brutal Fruit Litchi',cat:'Cider',unit:'Each',qty:36,min:12,cost:0,closing:null},
+  {id:96,name:'Brutal Fruit Orange Rossa 275ml',cat:'Cider',unit:'Each',qty:0,min:12,cost:0,closing:null},
+  {id:97,name:'Brutal Fruit Ruby',cat:'Cider',unit:'Each',qty:30,min:12,cost:0,closing:null},
+  {id:98,name:'Hunters Dry',cat:'Cider',unit:'Each',qty:24,min:12,cost:0,closing:null},
+  {id:99,name:'Hunters Dry 660ml',cat:'Cider',unit:'Each',qty:12,min:6,cost:0,closing:null},
+  {id:100,name:'Hunters Extreme',cat:'Cider',unit:'Each',qty:12,min:6,cost:0,closing:null},
+  {id:101,name:'Hunters Gold',cat:'Cider',unit:'Each',qty:18,min:12,cost:0,closing:null},
+  {id:102,name:'Hunters Gold 660ml',cat:'Cider',unit:'Each',qty:12,min:6,cost:0,closing:null},
+  {id:103,name:'Savanna Dry',cat:'Cider',unit:'Each',qty:90,min:12,cost:0,closing:null},
+  {id:104,name:'Savanna Light',cat:'Cider',unit:'Each',qty:24,min:12,cost:0,closing:null},
+  {id:105,name:'Savanna Zero',cat:'Cider',unit:'Each',qty:12,min:6,cost:0,closing:null},
+  {id:106,name:'Smirnoff Storm',cat:'Cider',unit:'Each',qty:0,min:6,cost:0,closing:null},
+  // WINE - BOTTLES
+  {id:107,name:'Beyerskloof Pinotage',cat:'Wine',unit:'Bottle 750ml',qty:4,min:3,cost:0,closing:null},
+  {id:108,name:'Buitenverwachting Rose',cat:'Wine',unit:'Bottle 750ml',qty:0,min:3,cost:0,closing:null},
+  {id:109,name:'Cederberg Merlot Shiraz',cat:'Wine',unit:'Bottle 750ml',qty:5,min:3,cost:0,closing:null},
+  {id:110,name:'Haute Cabrière Chardonnay Pinot Noir',cat:'Wine',unit:'Bottle 750ml',qty:20,min:6,cost:0,closing:null},
+  {id:111,name:'La Motte Millennium',cat:'Wine',unit:'Bottle 750ml',qty:0,min:3,cost:0,closing:null},
+  {id:112,name:'La Motte Sauv Blanc',cat:'Wine',unit:'Bottle 750ml',qty:13,min:3,cost:0,closing:null},
+  {id:113,name:'Leeuwenjacht Cab Sauv',cat:'Wine',unit:'Bottle 750ml',qty:0,min:3,cost:0,closing:null},
+  {id:114,name:'Simonsig Kaapse Vonk',cat:'Wine',unit:'Bottle 750ml',qty:0,min:3,cost:0,closing:null},
+  // WINE - BY GLASS
+  {id:115,name:'Chardonnay (glass)',cat:'Wine by the Glass',unit:'Glass 250ml',qty:0,min:0,cost:0,closing:null},
+  {id:116,name:'Leopards Leap Chenin (glass)',cat:'Wine by the Glass',unit:'Glass 250ml',qty:27,min:6,cost:0,closing:null},
+  {id:117,name:'Leopards Leap Merlot (glass)',cat:'Wine by the Glass',unit:'Glass 250ml',qty:51,min:6,cost:0,closing:null},
+  {id:118,name:'Leopards Leap Sauv Blanc (glass)',cat:'Wine by the Glass',unit:'Glass 250ml',qty:39,min:6,cost:0,closing:null},
+  {id:119,name:'Spier Sauvignon Blanc (glass)',cat:'Wine by the Glass',unit:'Glass 250ml',qty:0,min:0,cost:0,closing:null},
+  // SOFT DRINKS
+  {id:120,name:'Appletiser',cat:'Soft Drinks',unit:'Each',qty:24,min:12,cost:0,closing:null},
+  {id:121,name:'Coke',cat:'Soft Drinks',unit:'Each',qty:48,min:24,cost:0,closing:null},
+  {id:122,name:'Coke Light',cat:'Soft Drinks',unit:'Each',qty:18,min:12,cost:0,closing:null},
+  {id:123,name:'Coke Zero',cat:'Soft Drinks',unit:'Each',qty:192,min:24,cost:0,closing:null},
+  {id:124,name:'Creme Soda',cat:'Soft Drinks',unit:'Each',qty:12,min:6,cost:0,closing:null},
+  {id:125,name:'Dry Lemon',cat:'Soft Drinks',unit:'Each',qty:12,min:12,cost:0,closing:null},
+  {id:126,name:'Fanta Orange',cat:'Soft Drinks',unit:'Each',qty:24,min:12,cost:0,closing:null},
+  {id:127,name:'Ginger Ale',cat:'Soft Drinks',unit:'Each',qty:30,min:6,cost:0,closing:null},
+  {id:128,name:'Grapetiser Red',cat:'Soft Drinks',unit:'Each',qty:30,min:12,cost:0,closing:null},
+  {id:129,name:'Lemonade',cat:'Soft Drinks',unit:'Each',qty:18,min:6,cost:0,closing:null},
+  {id:130,name:'Lipton Iced Tea Lemon',cat:'Soft Drinks',unit:'Each',qty:6,min:12,cost:0,closing:null},
+  {id:131,name:'Lipton Iced Tea Peach',cat:'Soft Drinks',unit:'Each',qty:6,min:12,cost:0,closing:null},
+  {id:132,name:'Liqui Fruit Cranberry 300ml',cat:'Soft Drinks',unit:'Each',qty:12,min:6,cost:0,closing:null},
+  {id:133,name:'Liqui Fruit Orange 300ml',cat:'Soft Drinks',unit:'Each',qty:12,min:6,cost:0,closing:null},
+  {id:134,name:'Mimosa',cat:'Soft Drinks',unit:'Each',qty:12,min:6,cost:0,closing:null},
+  {id:135,name:'Soda Water',cat:'Soft Drinks',unit:'Each',qty:54,min:12,cost:0,closing:null},
+  {id:136,name:'Sparletta',cat:'Soft Drinks',unit:'Each',qty:24,min:12,cost:0,closing:null},
+  {id:137,name:'Sprite',cat:'Soft Drinks',unit:'Each',qty:24,min:24,cost:0,closing:null},
+  {id:138,name:'Sprite Zero',cat:'Soft Drinks',unit:'Each',qty:12,min:6,cost:0,closing:null},
+  {id:139,name:'Stoney 300ml',cat:'Soft Drinks',unit:'Each',qty:0,min:6,cost:0,closing:null},
+  // MIXERS & TONIC
+  {id:140,name:'Pink Tonic Mixer',cat:'Mixers',unit:'Each',qty:0,min:12,cost:0,closing:null},
+  {id:141,name:'Tonic',cat:'Mixers',unit:'Each',qty:60,min:12,cost:0,closing:null},
+  {id:142,name:'Tonic SF',cat:'Mixers',unit:'Each',qty:48,min:12,cost:0,closing:null},
+  // ENERGY DRINKS
+  {id:143,name:'Monster Mucho Loco',cat:'Energy Drinks',unit:'Each',qty:24,min:6,cost:0,closing:null},
+  {id:144,name:'Monster Original',cat:'Energy Drinks',unit:'Each',qty:36,min:12,cost:0,closing:null},
+  {id:145,name:'Monster Pacific Punch',cat:'Energy Drinks',unit:'Each',qty:20,min:6,cost:0,closing:null},
+  {id:146,name:'Red Bull',cat:'Energy Drinks',unit:'Each',qty:24,min:12,cost:0,closing:null},
+  {id:147,name:'Red Bull SF',cat:'Energy Drinks',unit:'Each',qty:24,min:6,cost:0,closing:null},
+  // WATER
+  {id:148,name:'Water Sparkling',cat:'Water',unit:'Each',qty:48,min:12,cost:0,closing:null},
+  {id:149,name:'Water Still',cat:'Water',unit:'Each',qty:48,min:12,cost:0,closing:null},
+];}
+
 function defaultBarStock(){return[
-  {id:1,name:'Absolut Vodka',cat:'Spirits',unit:'Tot (25ml)',qty:19,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:2,name:'Bacardi',cat:'Spirits',unit:'Tot (25ml)',qty:31,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:3,name:'Belgravia Gin',cat:'Spirits',unit:'Tot (25ml)',qty:63,min:10,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:4,name:'Bells Whisky',cat:'Spirits',unit:'Tot (25ml)',qty:19,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:5,name:'Buffelsfontein',cat:'Spirits',unit:'Tot (25ml)',qty:52,min:10,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:6,name:'Butlers Blue Schnapps',cat:'Shots',unit:'Tot (25ml)',qty:47,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:7,name:'Butlers Peppermint',cat:'Shots',unit:'Tot (25ml)',qty:54,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:8,name:'Butlers Strawberry',cat:'Shots',unit:'Tot (25ml)',qty:31,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:9,name:'Captain Morgan Dark',cat:'Spirits',unit:'Tot (25ml)',qty:31,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:10,name:'Captain Morgan Spiced',cat:'Spirits',unit:'Tot (25ml)',qty:43,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:11,name:'Don Julio Blanco',cat:'Spirits',unit:'Tot (25ml)',qty:5,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:12,name:'Famous Grouse',cat:'Spirits',unit:'Tot (25ml)',qty:15,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:13,name:'Fireball',cat:'Shots',unit:'Tot (25ml)',qty:29,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:14,name:'Gordons Gin',cat:'Spirits',unit:'Tot (25ml)',qty:27,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:15,name:'Grey Goose Vodka',cat:'Spirits',unit:'Tot (25ml)',qty:30,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:16,name:'Hennessy',cat:'Spirits',unit:'Tot (25ml)',qty:9,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:17,name:'Jack Daniels',cat:'Spirits',unit:'Tot (25ml)',qty:20,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:18,name:'Jägermeister',cat:'Shots',unit:'Tot (25ml)',qty:102,min:15,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:19,name:'Jameson',cat:'Spirits',unit:'Tot (25ml)',qty:8,min:3,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:20,name:'Johnnie Walker Red',cat:'Spirits',unit:'Tot (25ml)',qty:59,min:10,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:21,name:'Jose Cuervo Gold',cat:'Shots',unit:'Tot (25ml)',qty:156,min:20,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:22,name:'Klipdrift Premium',cat:'Spirits',unit:'Tot (25ml)',qty:26,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:23,name:'Richelieu',cat:'Spirits',unit:'Tot (25ml)',qty:13,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:24,name:'Tanqueray Gin',cat:'Spirits',unit:'Tot (25ml)',qty:26,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:25,name:'Vat 69',cat:'Spirits',unit:'Tot (25ml)',qty:57,min:10,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:26,name:'Black Label Draught',cat:'Beer',unit:'Liter',qty:43.5,min:10,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:27,name:'Castle Lite Draught',cat:'Beer',unit:'Liter',qty:10.5,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:28,name:'Castle Lite Dumpie',cat:'Beer',unit:'Each',qty:26,min:10,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:29,name:'Corona',cat:'Beer',unit:'Each',qty:15,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:30,name:'Guinness Draught',cat:'Beer',unit:'Each',qty:18,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:31,name:'Heineken',cat:'Beer',unit:'Each',qty:9,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:32,name:'Stella Artois',cat:'Beer',unit:'Each',qty:9,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:33,name:'Windhoek Draught',cat:'Beer',unit:'Each',qty:21,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:34,name:'Hunters Dry',cat:'Cider',unit:'Each',qty:19,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:35,name:'Hunters Gold',cat:'Cider',unit:'Each',qty:14,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:36,name:'Savanna Dry',cat:'Cider',unit:'Each',qty:8,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:37,name:'Beyerskloof Pinotage',cat:'Wine',unit:'Bottle 750ml',qty:2,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:38,name:'Haute Cabrière Chardonnay PN',cat:'Wine',unit:'Bottle 750ml',qty:4,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:39,name:'Coke',cat:'Soft Drinks',unit:'Each',qty:19,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:40,name:'Coke Zero',cat:'Soft Drinks',unit:'Each',qty:35,min:10,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:41,name:'Sprite',cat:'Soft Drinks',unit:'Each',qty:64,min:12,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:42,name:'Monster Original',cat:'Energy Drinks',unit:'Each',qty:7,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:43,name:'Tonic',cat:'Mixers',unit:'Each',qty:1,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
-  {id:44,name:'Water Still',cat:'Water',unit:'Each',qty:2,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  // SPIRITS - BRANDY & WHISKY
+  {id:1,name:'Buffelsfontein',cat:'Spirits',unit:'Tot (25ml)',qty:65,min:10,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:2,name:'Caramel Brandy',cat:'Spirits',unit:'Tot (25ml)',qty:23,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:3,name:'Klipdrift Brandy',cat:'Spirits',unit:'Tot (25ml)',qty:98,min:15,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:4,name:'Klipdrift Premium',cat:'Spirits',unit:'Tot (25ml)',qty:26,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:5,name:'Klipdrift Copper Ryl',cat:'Spirits',unit:'Tot (25ml)',qty:0,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:6,name:'Richelieu',cat:'Spirits',unit:'Tot (25ml)',qty:8,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:7,name:'Bells',cat:'Spirits',unit:'Tot (25ml)',qty:19,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:8,name:'Famous Grouse',cat:'Spirits',unit:'Tot (25ml)',qty:15,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:9,name:'J&B',cat:'Spirits',unit:'Tot (25ml)',qty:22,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:10,name:'Jack Daniels',cat:'Spirits',unit:'Tot (25ml)',qty:21,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:11,name:'Jameson',cat:'Spirits',unit:'Tot (25ml)',qty:15,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:12,name:'Jameson Select Res',cat:'Spirits',unit:'Tot (25ml)',qty:3,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:13,name:'Johnnie Walker Black',cat:'Spirits',unit:'Tot (25ml)',qty:20,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:14,name:'Johnnie Walker Red',cat:'Spirits',unit:'Tot (25ml)',qty:57,min:10,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:15,name:'Johnny Walker Double Black',cat:'Spirits',unit:'Tot (25ml)',qty:0,min:3,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:16,name:'Three Ships 3Yrs',cat:'Spirits',unit:'Tot (25ml)',qty:29,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  // SPIRITS - GIN
+  {id:17,name:'Belgravia',cat:'Spirits',unit:'Tot (25ml)',qty:40,min:10,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:18,name:'Gordons',cat:'Spirits',unit:'Tot (25ml)',qty:15,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:19,name:'Grey Goose',cat:'Spirits',unit:'Tot (25ml)',qty:30,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:20,name:'Tanqueray',cat:'Spirits',unit:'Tot (25ml)',qty:26,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  // SPIRITS - VODKA
+  {id:21,name:'Absolut',cat:'Spirits',unit:'Tot (25ml)',qty:19,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:22,name:'Red Square Vodka',cat:'Spirits',unit:'Tot (25ml)',qty:154,min:20,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:23,name:'Skyy',cat:'Spirits',unit:'Tot (25ml)',qty:17,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:24,name:'Smirnoff 1818',cat:'Spirits',unit:'Tot (25ml)',qty:25,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
+  // SPIRITS - RUM
+  {id:25,name:'Bacardi',cat:'Spirits',unit:'Tot (25ml)',qty:31,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:26,name:'Captain Morgan Dark',cat:'Spirits',unit:'Tot (25ml)',qty:23,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:27,name:'Captain Morgan Spiced',cat:'Spirits',unit:'Tot (25ml)',qty:55,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:28,name:'Malibu',cat:'Spirits',unit:'Tot (25ml)',qty:1,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:29,name:'Red Heart',cat:'Spirits',unit:'Tot (25ml)',qty:15,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  // SPIRITS - TEQUILA
+  {id:30,name:'Don Julio Blanco',cat:'Spirits',unit:'Tot (25ml)',qty:5,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:31,name:'Don Julio Reposado',cat:'Spirits',unit:'Tot (25ml)',qty:14,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:32,name:'Jose Cuervo Gold',cat:'Spirits',unit:'Tot (25ml)',qty:35,min:10,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:33,name:'Jose Cuervo Silver',cat:'Spirits',unit:'Tot (25ml)',qty:4,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  // SPIRITS - OTHER
+  {id:34,name:'Amarula Cream',cat:'Spirits',unit:'Tot (25ml)',qty:4,min:3,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:35,name:'Coffee Toffee',cat:'Spirits',unit:'Tot (25ml)',qty:2,min:3,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:36,name:'Hennesy',cat:'Spirits',unit:'Tot (25ml)',qty:4,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:37,name:'Kahlua',cat:'Spirits',unit:'Tot (25ml)',qty:2,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:38,name:'Obs',cat:'Spirits',unit:'Tot (25ml)',qty:21,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:39,name:'Oester Poester',cat:'Spirits',unit:'Tot (25ml)',qty:23,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:40,name:'P10C',cat:'Spirits',unit:'Tot (25ml)',qty:8,min:3,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:41,name:'Southern Comfort',cat:'Spirits',unit:'Tot (25ml)',qty:31,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:42,name:'Tipo Tinto',cat:'Spirits',unit:'Tot (25ml)',qty:68,min:10,cost:0,retail:0,closing:null,todayDeducted:0},
+  // SHOTS
+  {id:43,name:'Butlers Blue',cat:'Shots',unit:'Tot (25ml)',qty:47,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:44,name:'Butlers Peppermint',cat:'Shots',unit:'Tot (25ml)',qty:50,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:45,name:'Butlers Strawberry',cat:'Shots',unit:'Tot (25ml)',qty:31,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:46,name:'Cordial Kola Tonic',cat:'Shots',unit:'Tot (25ml)',qty:4,min:3,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:47,name:'Cordial Lime',cat:'Shots',unit:'Tot (25ml)',qty:4,min:3,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:48,name:'Cordial Passion Fruit',cat:'Shots',unit:'Tot (25ml)',qty:6,min:3,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:49,name:'Fireball',cat:'Shots',unit:'Tot (25ml)',qty:17,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:50,name:'Global Waters',cat:'Shots',unit:'Tot (25ml)',qty:22,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:51,name:'Jagmeister',cat:'Shots',unit:'Tot (25ml)',qty:17,min:10,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:52,name:'Jagermeister Orange',cat:'Shots',unit:'Tot (25ml)',qty:7,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:53,name:'Strawberry Lips',cat:'Shots',unit:'Tot (25ml)',qty:27,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:54,name:'Tang Apple',cat:'Shots',unit:'Tot (25ml)',qty:16,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:55,name:'Tang Cherry',cat:'Shots',unit:'Tot (25ml)',qty:8,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  // BEER - DRAUGHT
+  {id:56,name:'Black Label Draught',cat:'Beer',unit:'Liter',qty:20,min:10,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:57,name:'Castle Lite Draught',cat:'Beer',unit:'Liter',qty:35,min:10,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:58,name:'Stella Artois Draught',cat:'Beer',unit:'Liter',qty:10,min:5,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:59,name:'Windhoek Draught',cat:'Beer',unit:'Each',qty:17,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  // BEER - BOTTLES/CANS
+  {id:60,name:'Amstel Dumpies',cat:'Beer',unit:'Each',qty:6,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:61,name:'Amstel Lager 660ml',cat:'Beer',unit:'Each',qty:2,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:62,name:'Black Label Dumpie',cat:'Beer',unit:'Each',qty:17,min:10,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:63,name:'Black Label Quartz',cat:'Beer',unit:'Each',qty:9,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:64,name:'Castle Free',cat:'Beer',unit:'Each',qty:0,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:65,name:'Castle Lager 750ml',cat:'Beer',unit:'Each',qty:8,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:66,name:'Castle Lager Double Malt 330ml',cat:'Beer',unit:'Each',qty:11,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:67,name:'Castle Lite Dumpie',cat:'Beer',unit:'Each',qty:16,min:10,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:68,name:'Castle Lite Quarts',cat:'Beer',unit:'Each',qty:13,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:69,name:'Castle Milk Stout',cat:'Beer',unit:'Each',qty:0,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:70,name:'Corona',cat:'Beer',unit:'Each',qty:28,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:71,name:'Corona Zero',cat:'Beer',unit:'Each',qty:20,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:72,name:'Flying Fish 660ml',cat:'Beer',unit:'Each',qty:11,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:73,name:'Flying Fish Apple',cat:'Beer',unit:'Each',qty:5,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:74,name:'Flying Fish Lemon',cat:'Beer',unit:'Each',qty:0,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:75,name:'Guinness Draught',cat:'Beer',unit:'Each',qty:9,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:76,name:'Hansa Dumpies',cat:'Beer',unit:'Each',qty:11,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:77,name:'Hansa Pilsner 750ml',cat:'Beer',unit:'Each',qty:19,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:78,name:'Heineken',cat:'Beer',unit:'Each',qty:9,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:79,name:'Heineken 650ml',cat:'Beer',unit:'Each',qty:11,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:80,name:'Heineken Silver',cat:'Beer',unit:'Each',qty:5,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:81,name:'Heineken Zero',cat:'Beer',unit:'Each',qty:6,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:82,name:'Sol Cerveza',cat:'Beer',unit:'Each',qty:5,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:83,name:'Stella Artois',cat:'Beer',unit:'Each',qty:8,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:84,name:'Tafel Lager',cat:'Beer',unit:'Each',qty:13,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:85,name:'Windhoek Draught 660ml',cat:'Beer',unit:'Each',qty:22,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:86,name:'Windhoek Lager',cat:'Beer',unit:'Each',qty:9,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:87,name:'Windhoek Lager 660ml',cat:'Beer',unit:'Each',qty:8,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  // CIDER & RTD
+  {id:88,name:'Belgravia DarkCherry',cat:'Cider',unit:'Each',qty:2,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:89,name:'Belgravia G&Dry Lemon',cat:'Cider',unit:'Each',qty:13,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:90,name:'Belgravia G&T 275ml',cat:'Cider',unit:'Each',qty:2,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:91,name:'Belgravia Peach',cat:'Cider',unit:'Each',qty:11,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:92,name:'Bernini Blush 275ml',cat:'Cider',unit:'Each',qty:5,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:93,name:'Bernini Classic 275ml',cat:'Cider',unit:'Each',qty:0,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:94,name:'Black Crown G&T 275ml',cat:'Cider',unit:'Each',qty:0,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:95,name:'Brutal Fruit Litchi',cat:'Cider',unit:'Each',qty:9,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:96,name:'Brutal Fruit Orange Rossa 275ml',cat:'Cider',unit:'Each',qty:7,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:97,name:'Brutal Fruit Ruby',cat:'Cider',unit:'Each',qty:9,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:98,name:'Hunters Dry',cat:'Cider',unit:'Each',qty:17,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:99,name:'Hunters Dry 660ml',cat:'Cider',unit:'Each',qty:2,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:100,name:'Hunters Extreme',cat:'Cider',unit:'Each',qty:3,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:101,name:'Hunters Gold',cat:'Cider',unit:'Each',qty:12,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:102,name:'Hunters Gold 660ml',cat:'Cider',unit:'Each',qty:8,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:103,name:'Savanna Dry',cat:'Cider',unit:'Each',qty:20,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:104,name:'Savanna Light',cat:'Cider',unit:'Each',qty:14,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:105,name:'Savanna Zero',cat:'Cider',unit:'Each',qty:8,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:106,name:'Smirnoff Storm',cat:'Cider',unit:'Each',qty:0,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  // WINE - BOTTLES
+  {id:107,name:'Beyerskloof Pinotage',cat:'Wine',unit:'Bottle 750ml',qty:0,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:108,name:'Buitenverwachting Rose',cat:'Wine',unit:'Bottle 750ml',qty:0,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:109,name:'Cederberg Merlot Shiraz',cat:'Wine',unit:'Bottle 750ml',qty:0,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:110,name:'Durbanville Hills Merlot',cat:'Wine',unit:'Bottle 750ml',qty:0,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:111,name:'Fairview Cab Sauv',cat:'Wine',unit:'Bottle 750ml',qty:0,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:112,name:'Fairview Sauv Blanc',cat:'Wine',unit:'Bottle 750ml',qty:0,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:113,name:'Haute Cabrière Chardonnay Pinot Noir',cat:'Wine',unit:'Bottle 750ml',qty:2,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:114,name:'La Motte Millennium',cat:'Wine',unit:'Bottle 750ml',qty:0,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:115,name:'La Motte Sauv Blanc',cat:'Wine',unit:'Bottle 750ml',qty:0,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:116,name:'Leeuwenjacht Cab Sauv',cat:'Wine',unit:'Bottle 750ml',qty:0,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:117,name:'Simonsig Kaapse Vonk',cat:'Wine',unit:'Bottle 750ml',qty:0,min:2,cost:0,retail:0,closing:null,todayDeducted:0},
+  // WINE - BY GLASS
+  {id:118,name:'Chardonnay (glass)',cat:'Wine by the Glass',unit:'Glass 250ml',qty:0,min:0,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:119,name:'Leopards Leap Chenin (glass)',cat:'Wine by the Glass',unit:'Glass 250ml',qty:3,min:0,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:120,name:'Leopards Leap Merlot (glass)',cat:'Wine by the Glass',unit:'Glass 250ml',qty:5,min:0,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:121,name:'Leopards Leap Sauv Blanc (glass)',cat:'Wine by the Glass',unit:'Glass 250ml',qty:8,min:0,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:122,name:'Spier Sauvignon Blanc (glass)',cat:'Wine by the Glass',unit:'Glass 250ml',qty:0,min:0,cost:0,retail:0,closing:null,todayDeducted:0},
+  // SOFT DRINKS
+  {id:123,name:'Appletiser',cat:'Soft Drinks',unit:'Each',qty:2,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:124,name:'Coke',cat:'Soft Drinks',unit:'Each',qty:37,min:12,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:125,name:'Coke Light',cat:'Soft Drinks',unit:'Each',qty:4,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:126,name:'Coke Zero',cat:'Soft Drinks',unit:'Each',qty:18,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:127,name:'Creme Soda',cat:'Soft Drinks',unit:'Each',qty:10,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:128,name:'Dry Lemon',cat:'Soft Drinks',unit:'Each',qty:23,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:129,name:'Fanta Orange',cat:'Soft Drinks',unit:'Each',qty:3,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:130,name:'Ginger Ale',cat:'Soft Drinks',unit:'Each',qty:1,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:131,name:'Grapetiser Red',cat:'Soft Drinks',unit:'Each',qty:0,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:132,name:'Lemonade',cat:'Soft Drinks',unit:'Each',qty:4,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:133,name:'Lipton Iced Tea Lemon',cat:'Soft Drinks',unit:'Each',qty:14,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:134,name:'Lipton Iced Tea Peach',cat:'Soft Drinks',unit:'Each',qty:4,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:135,name:'Liqui Fruit Cranberry 300ml',cat:'Soft Drinks',unit:'Each',qty:7,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:136,name:'Liqui Fruit Orange 300ml',cat:'Soft Drinks',unit:'Each',qty:9,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:137,name:'Mimosa',cat:'Soft Drinks',unit:'Each',qty:0,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:138,name:'Soda Water',cat:'Soft Drinks',unit:'Each',qty:8,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:139,name:'Sparletta',cat:'Soft Drinks',unit:'Each',qty:5,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:140,name:'Sprite',cat:'Soft Drinks',unit:'Each',qty:54,min:12,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:141,name:'Sprite Zero',cat:'Soft Drinks',unit:'Each',qty:7,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:142,name:'Stoney 300ml',cat:'Soft Drinks',unit:'Each',qty:7,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  // MIXERS & TONIC
+  {id:143,name:'Pink Tonic Mixer',cat:'Mixers',unit:'Each',qty:12,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:144,name:'Tonic',cat:'Mixers',unit:'Each',qty:11,min:8,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:145,name:'Tonic SF',cat:'Mixers',unit:'Each',qty:12,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  // ENERGY DRINKS
+  {id:146,name:'Monster Mucho Loco',cat:'Energy Drinks',unit:'Each',qty:2,min:3,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:147,name:'Monster Original',cat:'Energy Drinks',unit:'Each',qty:13,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:148,name:'Monster Pacific Punch',cat:'Energy Drinks',unit:'Each',qty:4,min:3,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:149,name:'Red Bull',cat:'Energy Drinks',unit:'Each',qty:6,min:4,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:150,name:'Red Bull SF',cat:'Energy Drinks',unit:'Each',qty:1,min:3,cost:0,retail:0,closing:null,todayDeducted:0},
+  // WATER
+  {id:151,name:'Water Sparkling',cat:'Water',unit:'Each',qty:12,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:152,name:'Water Still',cat:'Water',unit:'Each',qty:13,min:6,cost:0,retail:0,closing:null,todayDeducted:0},
+  // HOT PER PERI / OTHER
+  {id:153,name:'Hot Peri Peri',cat:'Other',unit:'Liter',qty:0,min:1,cost:0,retail:0,closing:null,todayDeducted:0},
+  {id:154,name:'Sweet Chilli Mayo',cat:'Other',unit:'Liter',qty:0,min:1,cost:0,retail:0,closing:null,todayDeducted:0},
 ];}
 
 function defaultKitStock(){return[
@@ -3159,62 +3480,31 @@ function defaultKitStock(){return[
   {id:4,name:'Wraps',cat:'Bread & Dough',unit:'Each',qty:0,min:8,cost:0,retail:0,portion:'1 per wrap',closing:null,todayDeducted:0},
   {id:5,name:'Eggs',cat:'Dairy',unit:'Each',qty:0,min:12,cost:0,retail:0,portion:'2 per dish',closing:null,todayDeducted:0},
   // PIZZA
-  {id:6,name:'Pizza Sauce',cat:'Sauces',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'50ml per pizza',closing:null,todayDeducted:0},
   {id:7,name:'Pizza Base',cat:'Bread & Dough',unit:'Portion',qty:0,min:8,cost:0,retail:0,portion:'1 per pizza',closing:null,todayDeducted:0},
   {id:8,name:'Pizza Bacon',cat:'Meat & Poultry',unit:'Portion',qty:0,min:5,cost:0,retail:0,portion:'1 portion',closing:null,todayDeducted:0},
   {id:9,name:'Pizza Ribs',cat:'Pork',unit:'Portion',qty:0,min:5,cost:0,retail:0,portion:'1 portion',closing:null,todayDeducted:0},
   {id:10,name:'Pizza Ham',cat:'Meat & Poultry',unit:'Portion',qty:0,min:5,cost:0,retail:0,portion:'1 portion',closing:null,todayDeducted:0},
   {id:11,name:'Pizza Mince',cat:'Meat & Poultry',unit:'Portion',qty:0,min:5,cost:0,retail:0,portion:'1 portion',closing:null,todayDeducted:0},
   {id:12,name:'Pizza Pepperoni',cat:'Meat & Poultry',unit:'Portion',qty:0,min:5,cost:0,retail:0,portion:'1 portion',closing:null,todayDeducted:0},
-  // MEAT
+  // MEAT - portioned
   {id:13,name:'Beef Patties 200g',cat:'Meat & Poultry',unit:'Each',qty:0,min:20,cost:0,retail:0,portion:'1 per burger',closing:null,todayDeducted:0},
   {id:14,name:'Boerewors 200g',cat:'Meat & Poultry',unit:'Each',qty:0,min:10,cost:0,retail:0,portion:'1 per portion',closing:null,todayDeducted:0},
-  {id:15,name:'Ribs 500g',cat:'Pork',unit:'Portion',qty:0,min:5,cost:0,retail:0,portion:'1 rack',closing:null,todayDeducted:0},
+  {id:15,name:'Ribs 500g Portions',cat:'Pork',unit:'Portion',qty:0,min:5,cost:0,retail:0,portion:'1 rack',closing:null,todayDeducted:0},
   {id:16,name:'Beef Prego',cat:'Meat & Poultry',unit:'Each',qty:0,min:8,cost:0,retail:0,portion:'1 per prego',closing:null,todayDeducted:0},
   {id:17,name:'Steak 300g',cat:'Meat & Poultry',unit:'Each',qty:0,min:5,cost:0,retail:0,portion:'1 per dish',closing:null,todayDeducted:0},
   {id:18,name:'Bacon Slices',cat:'Meat & Poultry',unit:'Each',qty:0,min:20,cost:0,retail:0,portion:'2 per burger',closing:null,todayDeducted:0},
   {id:19,name:'Cheese Slices',cat:'Cheese',unit:'Each',qty:0,min:30,cost:0,retail:0,portion:'1-2 per burger',closing:null,todayDeducted:0},
-  {id:20,name:'Cheese Grillers',cat:'Meat & Poultry',unit:'Portion (8)',qty:0,min:5,cost:0,retail:0,portion:'8 per portion',closing:null,todayDeducted:0},
-  {id:21,name:'Chicken Wings',cat:'Meat & Poultry',unit:'Portion (8)',qty:0,min:10,cost:0,retail:0,portion:'8 per portion',closing:null,todayDeducted:0},
-  {id:22,name:'Chicken Half',cat:'Meat & Poultry',unit:'Portion',qty:0,min:5,cost:0,retail:0,portion:'½ chicken',closing:null,todayDeducted:0},
+  {id:20,name:'Cheese Grillers (Portioned)',cat:'Meat & Poultry',unit:'Portion (8)',qty:0,min:5,cost:0,retail:0,portion:'8 per portion',closing:null,todayDeducted:0},
+  {id:21,name:'Chicken Wings (Portioned)',cat:'Meat & Poultry',unit:'Portion (8)',qty:0,min:10,cost:0,retail:0,portion:'8 per portion',closing:null,todayDeducted:0},
+  {id:22,name:'Chicken Half',cat:'Meat & Poultry',unit:'Portion',qty:0,min:5,cost:0,retail:0,portion:'half chicken',closing:null,todayDeducted:0},
   {id:23,name:'Chicken Fillet',cat:'Meat & Poultry',unit:'Each',qty:0,min:10,cost:0,retail:0,portion:'1 per dish',closing:null,todayDeducted:0},
   {id:24,name:'Chips Portioned',cat:'Frozen',unit:'Portion (100g)',qty:0,min:20,cost:0,retail:0,portion:'100g per side',closing:null,todayDeducted:0},
   {id:25,name:'Mozzarella Portions',cat:'Cheese',unit:'Portion (150g)',qty:0,min:5,cost:0,retail:0,portion:'150g per pizza',closing:null,todayDeducted:0},
-  // SAUCES
-  {id:26,name:'BBQ Sauce',cat:'Sauces',unit:'Liter',qty:0,min:2,cost:0,retail:0,portion:'30ml per dish',closing:null,todayDeducted:0},
-  {id:27,name:'Mushroom Sauce',cat:'Sauces',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'80ml per dish',closing:null,todayDeducted:0},
-  {id:28,name:'Peri Peri Sauce',cat:'Sauces',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'50ml per dish',closing:null,todayDeducted:0},
-  {id:29,name:'Prego Sauce',cat:'Sauces',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'50ml per prego',closing:null,todayDeducted:0},
-  {id:30,name:'Lemon and Herb Sauce',cat:'Sauces',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'50ml per dish',closing:null,todayDeducted:0},
-  {id:31,name:'Sweet Chilli Mayo',cat:'Sauces',unit:'Liter',qty:0,min:0.5,cost:0,retail:0,portion:'30ml per dish',closing:null,todayDeducted:0},
-  {id:32,name:'Sweet Chilli Sauce',cat:'Sauces',unit:'Liter',qty:0,min:0.5,cost:0,retail:0,portion:'30ml per dish',closing:null,todayDeducted:0},
-  {id:33,name:'Lemon Juice',cat:'Sauces',unit:'Liter',qty:0,min:0.5,cost:0,retail:0,portion:'10ml per dish',closing:null,todayDeducted:0},
-  {id:34,name:'Mayonnaise',cat:'Condiments',unit:'kg',qty:0,min:1,cost:0,retail:0,portion:'20g per portion',closing:null,todayDeducted:0},
-  // BULK
-  {id:35,name:'Chips Bulk',cat:'Frozen',unit:'kg',qty:0,min:5,cost:0,retail:0,portion:'200g per side',closing:null,todayDeducted:0},
-  {id:36,name:'Wings Bulk',cat:'Meat & Poultry',unit:'kg',qty:0,min:2,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
-  {id:37,name:'Ribs Bulk',cat:'Pork',unit:'kg',qty:0,min:2,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
-  {id:38,name:'Pepperoni Bulk',cat:'Meat & Poultry',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
-  {id:39,name:'Cheese Griller Bulk',cat:'Meat & Poultry',unit:'kg',qty:0,min:1,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
-  {id:40,name:'Bacon Cubs Bulk',cat:'Meat & Poultry',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
-  {id:41,name:'Bacon Slices Bulk',cat:'Meat & Poultry',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
-  {id:42,name:'Ham Bulk',cat:'Meat & Poultry',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
-  {id:43,name:'Ham Slices',cat:'Meat & Poultry',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
-  {id:44,name:'Mozzarella Bulk',cat:'Cheese',unit:'kg',qty:0,min:1,cost:0,retail:0,portion:'100g per pizza',closing:null,todayDeducted:0},
-  {id:45,name:'Milk',cat:'Dairy',unit:'Liter',qty:0,min:2,cost:0,retail:0,portion:'per liter',closing:null,todayDeducted:0},
-  {id:46,name:'Cream',cat:'Dairy',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'per liter',closing:null,todayDeducted:0},
-  {id:47,name:'Feta Bulk',cat:'Cheese',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
-  {id:48,name:'Crushed Garlic',cat:'Herbs & Spices',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
-  {id:49,name:'Oil Bulk',cat:'Other',unit:'Liter',qty:0,min:2,cost:0,retail:0,portion:'per liter',closing:null,todayDeducted:0},
-  {id:50,name:'Black Olives Sliced',cat:'Other',unit:'kg',qty:0,min:0.2,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
-  {id:51,name:'Kalamata Olives',cat:'Other',unit:'kg',qty:0,min:0.2,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
-  {id:52,name:'Olive Oil',cat:'Other',unit:'Liter',qty:0,min:0.5,cost:0,retail:0,portion:'per liter',closing:null,todayDeducted:0},
-  // STAFF MEALS & DRY GOODS
+  // DRY GOODS & STAFF MEALS
   {id:53,name:'Maize Meal',cat:'Dry Goods',unit:'kg',qty:0,min:5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
   {id:54,name:'Rice',cat:'Dry Goods',unit:'kg',qty:0,min:2,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
   {id:55,name:'Staff Chicken',cat:'Meat & Poultry',unit:'Each (3-piece)',qty:0,min:5,cost:0,retail:0,portion:'3 pieces',closing:null,todayDeducted:0},
   {id:56,name:'Flour',cat:'Dry Goods',unit:'kg',qty:0,min:5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
-  {id:57,name:'Tomato Sauce',cat:'Sauces',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'per liter',closing:null,todayDeducted:0},
   {id:58,name:'Sugar',cat:'Dry Goods',unit:'kg',qty:0,min:1,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
   {id:59,name:'Butter',cat:'Dairy',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
   {id:60,name:'Whole Peeled Tomatoes',cat:'Vegetables',unit:'kg',qty:0,min:1,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
@@ -3238,7 +3528,6 @@ function defaultKitStock(){return[
   {id:77,name:'Core Salt',cat:'Herbs & Spices',unit:'kg',qty:0,min:0.5,cost:0,retail:0,portion:'per kg',closing:null,todayDeducted:0},
   {id:78,name:'Kitchen Wine',cat:'Other',unit:'Liter',qty:0,min:1,cost:0,retail:0,portion:'per liter',closing:null,todayDeducted:0},
 ];}
-
 // ═══════════════════════════════════════════════
 // HOURLY SALES CHART (canvas-based)
 // ═══════════════════════════════════════════════
@@ -3319,6 +3608,42 @@ function renderMonthlyInventory(el,snaps,month){
 }
 
 // (renderDailyReport defined above — includes hourly chart)
+function defaultBulkStock(){return[
+  // MEAT & PROTEIN BULK (tracked in grams)
+  {id:101,name:'Chips Bulk',cat:'Frozen',bulkUnit:'g',total:22500,remaining:22500,min:1000,cost:0,containerSize:22500,portionSize:200,costPerUnit:0,todayDeducted:0},
+  {id:102,name:'Wings Bulk',cat:'Meat & Poultry',bulkUnit:'g',total:0,remaining:0,min:500,cost:0,containerSize:1000,portionSize:250,costPerUnit:0,todayDeducted:0},
+  {id:103,name:'Ribs Bulk',cat:'Pork',bulkUnit:'g',total:0,remaining:0,min:500,cost:0,containerSize:1000,portionSize:500,costPerUnit:0,todayDeducted:0},
+  {id:104,name:'Pepperoni Bulk',cat:'Meat & Poultry',bulkUnit:'g',total:9000,remaining:9000,min:500,cost:0,containerSize:1000,portionSize:50,costPerUnit:0,todayDeducted:0},
+  {id:105,name:'Cheese Griller Bulk',cat:'Meat & Poultry',bulkUnit:'g',total:12000,remaining:12000,min:500,cost:0,containerSize:1000,portionSize:250,costPerUnit:0,todayDeducted:0},
+  {id:106,name:'Bacon Cubs Bulk',cat:'Meat & Poultry',bulkUnit:'g',total:6000,remaining:6000,min:500,cost:0,containerSize:1000,portionSize:100,costPerUnit:0,todayDeducted:0},
+  {id:107,name:'Bacon Slices Bulk',cat:'Meat & Poultry',bulkUnit:'g',total:6000,remaining:6000,min:500,cost:0,containerSize:1000,portionSize:60,costPerUnit:0,todayDeducted:0},
+  {id:108,name:'Ham Bulk',cat:'Meat & Poultry',bulkUnit:'g',total:3000,remaining:3000,min:300,cost:0,containerSize:1000,portionSize:80,costPerUnit:0,todayDeducted:0},
+  {id:109,name:'Ham Slices',cat:'Meat & Poultry',bulkUnit:'g',total:2500,remaining:2500,min:300,cost:0,containerSize:1000,portionSize:80,costPerUnit:0,todayDeducted:0},
+  {id:110,name:'Mozzarella Bulk',cat:'Cheese',bulkUnit:'g',total:4600,remaining:4600,min:500,cost:0,containerSize:1000,portionSize:150,costPerUnit:0,todayDeducted:0},
+  {id:111,name:'Feta Bulk',cat:'Cheese',bulkUnit:'g',total:3000,remaining:3000,min:300,cost:0,containerSize:1000,portionSize:50,costPerUnit:0,todayDeducted:0},
+  {id:112,name:'Crushed Garlic',cat:'Condiments',bulkUnit:'g',total:5000,remaining:5000,min:200,cost:0,containerSize:1000,portionSize:10,costPerUnit:0,todayDeducted:0},
+  // SAUCES & CONDIMENTS (tracked in ml)
+  {id:113,name:'BBQ Sauce',cat:'Sauces',bulkUnit:'ml',total:22000,remaining:22000,min:500,cost:0,containerSize:1000,portionSize:30,costPerUnit:0,todayDeducted:0},
+  {id:114,name:'Mushroom Sauce',cat:'Sauces',bulkUnit:'ml',total:2500,remaining:2500,min:500,cost:0,containerSize:1000,portionSize:80,costPerUnit:0,todayDeducted:0},
+  {id:115,name:'Peri Peri Sauce',cat:'Sauces',bulkUnit:'ml',total:5000,remaining:5000,min:500,cost:0,containerSize:1000,portionSize:50,costPerUnit:0,todayDeducted:0},
+  {id:116,name:'Prego Sauce',cat:'Sauces',bulkUnit:'ml',total:10000,remaining:10000,min:500,cost:0,containerSize:1000,portionSize:50,costPerUnit:0,todayDeducted:0},
+  {id:117,name:'Lemon and Herb Sauce',cat:'Sauces',bulkUnit:'ml',total:5000,remaining:5000,min:500,cost:0,containerSize:1000,portionSize:50,costPerUnit:0,todayDeducted:0},
+  {id:118,name:'Sweet Chilli Mayo',cat:'Sauces',bulkUnit:'ml',total:2000,remaining:2000,min:200,cost:0,containerSize:1000,portionSize:30,costPerUnit:0,todayDeducted:0},
+  {id:119,name:'Sweet Chilli Sauce',cat:'Sauces',bulkUnit:'ml',total:10000,remaining:10000,min:500,cost:0,containerSize:2000,portionSize:30,costPerUnit:0,todayDeducted:0},
+  {id:120,name:'Lemon Juice',cat:'Sauces',bulkUnit:'ml',total:10000,remaining:10000,min:200,cost:0,containerSize:1000,portionSize:10,costPerUnit:0,todayDeducted:0},
+  {id:121,name:'Mayonnaise',cat:'Condiments',bulkUnit:'g',total:6000,remaining:6000,min:300,cost:0,containerSize:1000,portionSize:20,costPerUnit:0,todayDeducted:0},
+  {id:122,name:'Pizza Sauce',cat:'Sauces',bulkUnit:'ml',total:2500,remaining:2500,min:500,cost:0,containerSize:1000,portionSize:50,costPerUnit:0,todayDeducted:0},
+  {id:123,name:'Tomato Sauce',cat:'Sauces',bulkUnit:'ml',total:4500,remaining:4500,min:500,cost:0,containerSize:4500,portionSize:30,costPerUnit:0,todayDeducted:0},
+  // DAIRY & OILS (tracked in ml)
+  {id:124,name:'Milk',cat:'Dairy',bulkUnit:'ml',total:4000,remaining:4000,min:500,cost:0,containerSize:1000,portionSize:200,costPerUnit:0,todayDeducted:0},
+  {id:125,name:'Cream',cat:'Dairy',bulkUnit:'ml',total:16000,remaining:16000,min:500,cost:0,containerSize:1000,portionSize:100,costPerUnit:0,todayDeducted:0},
+  {id:126,name:'Oil',cat:'Other',bulkUnit:'ml',total:30000,remaining:30000,min:2000,cost:0,containerSize:20000,portionSize:50,costPerUnit:0,todayDeducted:0},
+  {id:127,name:'Olive Oil',cat:'Other',bulkUnit:'ml',total:5000,remaining:5000,min:500,cost:0,containerSize:5000,portionSize:15,costPerUnit:0,todayDeducted:0},
+  // OLIVES & EXTRAS
+  {id:128,name:'Black Olives Sliced',cat:'Condiments',bulkUnit:'g',total:1560,remaining:1560,min:200,cost:0,containerSize:1560,portionSize:20,costPerUnit:0,todayDeducted:0},
+  {id:129,name:'Kalamata Olives',cat:'Condiments',bulkUnit:'g',total:1450,remaining:1450,min:200,cost:0,containerSize:1450,portionSize:20,costPerUnit:0,todayDeducted:0},
+];}
+
 function renderAll(){
   renderCashupHistory();renderTipsHistory&&renderTipsHistory();renderReconHistory();
   renderBarStock();renderKitchenStock();renderBulkStock();renderMenuList();
@@ -3334,7 +3659,7 @@ window.addEventListener('load',async()=>{
   menuItems=load('hitw_menu',defaultMenu());
   barStock=load('hitw_barstock',defaultBarStock());
   kitchenStock=load('hitw_kstock',defaultKitStock());
-  bulkStock=load('hitw_bulkstock',[]);
+  const _savedBulk=load('hitw_bulkstock',null);if(!_savedBulk){bulkStock=defaultBulkStock();}else{bulkStock=_savedBulk;const _defBulk=defaultBulkStock();let _ab=0;_defBulk.forEach(d=>{const ex=bulkStock.some(s=>s.name.toLowerCase().trim()===d.name.toLowerCase().trim());if(!ex){bulkStock.push({...d,id:Date.now()+Math.random()});_ab++;}});if(_ab>0)save('hitw_bulkstock',bulkStock);}
   orders=load('hitw_orders',[]);
   promoLog=load('hitw_promo',[]);
   unpaidTables=load('hitw_unpaid',[]);
@@ -3342,7 +3667,9 @@ window.addEventListener('load',async()=>{
   tipsData=load('hitw_tips',[]);
   reconData=load('hitw_recon',[]);
   waiterTipsLog=load('hitw_waitertips',[]);
-  backStock=load('hitw_backstock',[]);
+  const _savedBack=load('hitw_backstock',null);
+  if(!_savedBack){backStock=defaultBackStock();}
+  else{backStock=_savedBack;const _defBack=defaultBackStock();let _ab3=0;_defBack.forEach(d=>{const ex=backStock.some(s=>s.name.toLowerCase().trim()===d.name.toLowerCase().trim());if(!ex){backStock.push({...d,id:Date.now()+Math.random()});_ab3++;}});if(_ab3>0)save('hitw_backstock',backStock);}
   transferLog=load('hitw_transfers',[]);
   recipes=load('hitw_recipes',{});
   stockLog=load('hitw_stocklog',[]);
